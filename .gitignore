@@ -1,0 +1,11 @@
+# DB 파일
+*.db
+*.db-shm
+*.db-wal
+
+# 영수증 이미지
+receipts/
+
+# 빌드 파일
+build/
+*.user
