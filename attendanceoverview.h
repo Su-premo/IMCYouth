@@ -15,10 +15,16 @@ class AttendanceOverview : public QWidget
 public:
     explicit AttendanceOverview(QWidget *parent = nullptr);
     ~AttendanceOverview();
-    void loadOverview(int year, int month);
+//    void loadOverview(int year, int month);
+    void loadOverview(int year);
+
+protected:
+    void showEvent(QShowEvent *event) override;
 
 private:
     Ui::AttendanceOverview *ui;
+    int savedYear;
+    int savedMonth;
 };
 
 #endif // ATTENDANCEOVERVIEW_H
