@@ -10,6 +10,8 @@
 #include <QHBoxLayout>
 #include <algorithm>
 
+#include <QCoreApplication>
+
 #include "QChartView"
 #include "QPieSeries"
 #include "QBarSeries"
@@ -243,8 +245,14 @@ void MainWindow::initMembersTab()
 
 void MainWindow::initDatabase()
 {
-    QString dbPath = QDir::homePath() + "/IMCYouth/imcyouth.db";
-    QDir().mkpath(QDir::homePath() + "/IMCYouth");
+    // ===== DB 경로 설정 =====
+    // Ubuntu 개발 환경: 홈 디렉토리 사용
+    // QString dbPath = QDir::homePath() + "/IMCYouth/imcyouth.db";
+    // QDir().mkpath(QDir::homePath() + "/IMCYouth");
+
+    // Windows 배포 환경: exe 파일과 같은 폴더 사용
+    QString dbPath = QCoreApplication::applicationDirPath() + "/imcyouth.db";
+    // ========================
 
     db = QSqlDatabase::addDatabase("QSQLITE");
     db.setDatabaseName(dbPath);
