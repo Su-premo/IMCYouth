@@ -7,6 +7,8 @@ int main(int argc, char *argv[])
     QApplication a(argc, argv);
     MainWindow w;
 
+    w.setWindowTitle("권라면");
+
     // 폰트 지정
     #ifdef Q_OS_WIN
         QFont font("Malgun Gothic", 10); // Windows: 맑은 고딕

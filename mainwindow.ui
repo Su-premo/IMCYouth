@@ -24,7 +24,7 @@
        </size>
       </property>
       <property name="currentIndex">
-       <number>3</number>
+       <number>0</number>
       </property>
       <property name="iconSize">
        <size>
@@ -93,14 +93,14 @@
          <item>
           <widget class="QPushButton" name="btnSearchAt">
            <property name="text">
-            <string>search</string>
+            <string>조회</string>
            </property>
           </widget>
          </item>
          <item>
           <widget class="QPushButton" name="btnSaveAt">
            <property name="text">
-            <string>save</string>
+            <string>저장</string>
            </property>
           </widget>
          </item>

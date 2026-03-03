@@ -84,9 +84,17 @@ MainWindow::MainWindow(QWidget *parent)
         overview->show();
     });
 
+    // break 탭(4번째) 버튼만 크기 0으로 숨기기 - 페이지는 정상 유지
+    QString breakTabStyle = QString(
+        "QTabBar::tab:nth-child(%1) { min-width: 0px; max-width: 0px; "
+        "min-height: 0px; max-height: 0px; padding: 0px; border: none; margin: 0px; }"
+    ).arg(breakTabIndex + 1);
+    ui->tabWidget->setStyleSheet(ui->tabWidget->styleSheet() + breakTabStyle);
+
     connect(btnBreak, &QPushButton::clicked, this, [this, breakTabIndex](){
-        ui->tabWidget->tabBar()->setTabVisible(breakTabIndex, true);
+//        ui->tabWidget->tabBar()->setTabVisible(breakTabIndex, true);
         ui->tabWidget->setCurrentIndex(breakTabIndex);
+//        ui->tabWidget->tabBar()->setTabVisible(breakTabIndex, false);
     });
 
     initAccountTab();
