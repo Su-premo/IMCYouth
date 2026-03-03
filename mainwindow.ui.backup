@@ -93,14 +93,14 @@
          <item>
           <widget class="QPushButton" name="btnSearchAt">
            <property name="text">
-            <string>조회</string>
+            <string>search</string>
            </property>
           </widget>
          </item>
          <item>
           <widget class="QPushButton" name="btnSaveAt">
            <property name="text">
-            <string>저장</string>
+            <string>save</string>
            </property>
           </widget>
          </item>

@@ -41,28 +41,85 @@ MainWindow::MainWindow(QWidget *parent)
     initAttendanceTab();
     connect(ui->btnSearchAt, &QPushButton::clicked, this, &MainWindow::loadAttendance);
     connect(ui->btnSaveAt, &QPushButton::clicked, this, &MainWindow::saveAttendance);
-    // 출석 탭 선택시에만 전체현황 버튼 표시
-    ui->btnOverviewAt->setParent(ui->tabWidget);
-    ui->tabWidget->setCornerWidget(ui->btnOverviewAt, Qt::TopRightCorner);
 
-    connect(ui->tabWidget, &QTabWidget::currentChanged, this, [this](int index){
-        ui->btnOverviewAt->setVisible(index == 0);              // 출석탭(0)일때만 표시
+    // ---- 공통 링크형 버튼 스타일 ----
+    const QString linkButtonStyle =
+        "QPushButton { "
+        "background: transparent; border: none; "
+        "color: blue; padding: 3px 4px; font-weight: 700; "
+        "min-height: 0px; }"
+        "QPushButton:hover { color: darkblue; }";
+
+    // 출석 탭의 전체현황 버튼에 적용
+    ui->btnOverviewAt->setStyleSheet("");  // 기존 스타일 삭제
+    ui->btnOverviewAt->setStyleSheet(linkButtonStyle);
+    ui->btnOverviewAt->setCursor(Qt::PointingHandCursor);
+    ui->btnOverviewAt->setFlat(true);
+    ui->btnOverviewAt->setMaximumWidth(80);
+
+    // 출석 탭 선택시에만 전체현황 버튼 표시 / 회계 탭 선택시에만 break 버튼 표시
+    // cornerWidget에 전체현황 + break 버튼 함께 배치
+    QPushButton *btnBreak = new QPushButton("BREAK IN");
+    btnBreak->setStyleSheet(linkButtonStyle);
+    btnBreak->setCursor(Qt::PointingHandCursor);
+    btnBreak->setFlat(true);
+    btnBreak->setMaximumWidth(100);         // break 글자 길이에 맞게
+    btnBreak->setVisible(false);
+
+    QWidget *cornerWidget = new QWidget();
+    QHBoxLayout *cornerLayout = new QHBoxLayout(cornerWidget);
+    cornerLayout->setContentsMargins(0, 5, 0, 0);
+    cornerLayout->addWidget(ui->btnOverviewAt);
+    cornerLayout->addWidget(btnBreak);
+    ui->tabWidget->setCornerWidget(cornerWidget, Qt::TopRightCorner);
+
+    // 탭 변경에 따라 corner 버튼 표시 제어
+    connect(ui->tabWidget, &QTabWidget::currentChanged, this, [this, btnBreak](int index){
+        ui->btnOverviewAt->setVisible(index == 0);          // 출석탭(0)일때
+        btnBreak->setVisible(index == 1);                   // 회계탭(1)일때
     });
+
+    // 출석 전체현황 버튼 동작
     connect(ui->btnOverviewAt, &QPushButton::clicked, this, [this](){
         AttendanceOverview *overview = new AttendanceOverview();
         int year = ui->spinYearAt->value();
         int month = ui->comboMonthAt->currentData().toInt();
-//        overview->loadOverview(year, month);
         overview->loadOverview(year);
         overview->setAttribute(Qt::WA_DeleteOnClose);           // 닫힐때 메모리 해제 - 프로그램 창 닫히면 전체현황 창도 닫히게 함
         overview->show();
     });
 
+    // 회계 BREAK 버튼 동작
+    connect(btnBreak, &QPushButton::clicked, this, [this, btnBreak](){
+        if (!isBreakMode) {
+            isBreakMode = true;
+            btnBreak->setText("BREAK OUT");  // 브레이크머니 진입상태
+            ui->tabWidget->setCurrentIndex(1);
+            loadBreak();
+        } else {
+            isBreakMode = false;
+            btnBreak->setText("BREAK IN");   // 회계로 돌아온 상태
+            loadAccount();
+        }
+    });
+
     initAccountTab();
-    connect(ui->btnSearchAc, &QPushButton::clicked, this, &MainWindow::loadAccount);
-    connect(ui->btnSaveAc, &QPushButton::clicked, this, &MainWindow::saveAccount);
-    connect(ui->btnAddAc, &QPushButton::clicked, this, &MainWindow::addAccountRow);
-    connect(ui->btnDeleteAc, &QPushButton::clicked, this, &MainWindow::deleteAccountRow);
+    connect(ui->btnAddAc, &QPushButton::clicked, this, [this](){
+        if (isBreakMode) addBreakRow();    // 브레이크머니 모드면 break 추가
+        else addAccountRow();              // 일반 모드면 회계 추가
+    });
+    connect(ui->btnDeleteAc, &QPushButton::clicked, this, [this](){
+        if (isBreakMode) deleteBreakRow(); // 브레이크머니 모드면 break 삭제
+        else deleteAccountRow();           // 일반 모드면 회계 삭제
+    });
+    connect(ui->btnSaveAc, &QPushButton::clicked, this, [this](){
+        if (isBreakMode) saveBreak();      // 브레이크머니 모드면 break 저장
+        else saveAccount();                // 일반 모드면 회계 저장
+    });
+    connect(ui->btnSearchAc, &QPushButton::clicked, this, [this](){
+        if (isBreakMode) loadBreak();      // 브레이크머니 모드면 break 조회
+        else loadAccount();                // 일반 모드면 회계 조회
+    });
 
     initMembersTab();
     connect(ui->btnSearchMember, &QPushButton::clicked, this, &MainWindow::searchMemberByName);
@@ -125,19 +182,6 @@ void MainWindow::initAttendanceTab()
     ui->comboMonthAt->addItem("10월", 10);
     ui->comboMonthAt->addItem("11월", 11);
     ui->comboMonthAt->addItem("12월", 12);
-
-    // 전체 현황 버튼
-    ui->btnOverviewAt->setStyleSheet(
-        "QPushButton { background: transparent; border: none; "
-        "color: blue; padding: 3px 4px; font-weight: 700; "
-        "text-decoration: underline; }"
-        "QPushButton:hover { color: darkblue; }"
-    );
-    ui->btnOverviewAt->setCursor(Qt::PointingHandCursor);
-    ui->btnOverviewAt->setMaximumWidth(80);
-    ui->btnOverviewAt->setMaximumHeight(22);
-    ui->btnOverviewAt->setContentsMargins(0, 5, 0, 0); // 위쪽 마진 5px
-
 
     // 현재 월로 기본 설정
     ui->comboMonthAt->setCurrentIndex(QDate::currentDate().month() - 1);
@@ -245,24 +289,19 @@ void MainWindow::initMembersTab()
 
 void MainWindow::initDatabase()
 {
-    // ===== DB 경로 설정 =====
-    // Ubuntu 개발 환경: 홈 디렉토리 사용
-    // QString dbPath = QDir::homePath() + "/IMCYouth/imcyouth.db";
-    // QDir().mkpath(QDir::homePath() + "/IMCYouth");
-
-    // Windows 배포 환경: exe 파일과 같은 폴더 사용
-    QString dbPath = QCoreApplication::applicationDirPath() + "/imcyouth.db";
-    // ========================
+    // 폴더 생성
+    QDir().mkpath(BASE_PATH);
+    QDir().mkpath(BASE_PATH + "/receipts");
 
     db = QSqlDatabase::addDatabase("QSQLITE");
-    db.setDatabaseName(dbPath);
+    db.setDatabaseName(BASE_PATH + "/imcyouth.db");
 
     if (!db.open()) {
         qDebug() << "DB 연결 실패:" << db.lastError().text();
         return;
     }
 
-    qDebug() << "DB 연결 성공! 경로:" << dbPath;
+    qDebug() << "DB 연결 성공! 경로:" << BASE_PATH + "/imcyouth.db";
 
     QSqlQuery query;
 
@@ -308,7 +347,7 @@ void MainWindow::initDatabase()
             description TEXT,
             amount INTEGER,
             type TEXT,
-            isBlack INTEGER DEFAULT 0,
+            isBlack INTEGER DEFAULT 0,  -- 0: 일반회계, 1: 브레이크머니
             receiptImage TEXT
         )
     )");
@@ -511,6 +550,7 @@ void MainWindow::saveAttendance()
     }
 
     QMessageBox::information(this, "저장 완료", "출석이 저장되었습니다!");
+    updateCharts();
 }
 
 void MainWindow::updateCharts()
@@ -552,9 +592,12 @@ void MainWindow::updateCharts()
         int absent = data.second - present;
         if (data.second == 0) {
             series->append("No Data", 1);
+            series->slices().at(0)->setColor(CHART_PastelBlue[2]);
         } else {
             series->append("출석 " + QString::number(present), present);
             series->append("결석 " + QString::number(absent), absent);
+            series->slices().at(0)->setColor(CHART_PastelBlue[0]); // 출석
+            series->slices().at(1)->setColor(CHART_PastelBlue[2]); // 결석
         }
 
         QChart *chart = new QChart();
@@ -586,6 +629,8 @@ void MainWindow::updateCharts()
 
     // 연간 막대그래프
     QBarSet *barSet = new QBarSet("평균 출석률(%)");
+    barSet->setColor(CHART_PastelBlue[0]);          // 막대 색상
+    barSet->setBorderColor(CHART_PastelBlue[1]);    // 막대 테두리 색상
     QStringList monthLabels;
     for (int m = 1; m <= 12; m++) {
         QSqlQuery q(db);
@@ -665,7 +710,7 @@ void MainWindow::loadAccount()
     QString yearMonth = ui->dateAc->date().toString("yyyy-MM");
 
     QSqlQuery query(db);
-    query.prepare("SELECT id, date, category, description, amount, type, receiptImage FROM transactions WHERE date LIKE ? ORDER BY date ASC");
+    query.prepare("SELECT id, date, category, description, amount, type, receiptImage FROM transactions WHERE date LIKE ? AND isBlack=0 ORDER BY date ASC");
     query.addBindValue(yearMonth + "-%");
     query.exec();
 
@@ -692,9 +737,16 @@ void MainWindow::loadAccount()
         ui->tableAc->setItem(row, 2, makeItem(query.value(2).toString())); // category
         ui->tableAc->setItem(row, 3, makeItem(query.value(3).toString())); // description
         ui->tableAc->setItem(row, 4, makeItem(query.value(4).toString())); // amount
-        ui->tableAc->setItem(row, 5, makeItem(query.value(5).toString())); // type
         ui->tableAc->item(row, 1)->setData(Qt::UserRole, query.value(0).toInt());
 
+        // 수입/지출 콤보박스
+        QComboBox *typeCombo = new QComboBox();
+        typeCombo->addItems(ACCOUNT_TYPES);
+        typeCombo->setCurrentText(query.value(5).toString());
+        typeCombo->setStyleSheet("QComboBox { qproperty-alignment: AlignCenter; }");
+        ui->tableAc->setCellWidget(row, 5, typeCombo);
+
+        // 영수증 버튼
         QString receiptPath = query.value(6).toString();
         QPushButton *receiptBtn = new QPushButton();
         if (receiptPath.isEmpty()) {
@@ -711,17 +763,17 @@ void MainWindow::loadAccount()
             if (path.isEmpty()) {
                 QString filePath = QFileDialog::getOpenFileName(this, "영수증 선택", "", "Images (*.png *.jpg *.jpeg)");
                 if (!filePath.isEmpty()) {
-                    QString destDir = QDir::homePath() + "/IMCYouth/receipts/";
+                    QString destDir = BASE_PATH + "/receipts/";
                     QDir().mkpath(destDir);
                     QString fileName = QFileInfo(filePath).fileName();
                     QString destPath = destDir + fileName;
                     QFile::copy(filePath, destPath);
-                    receiptBtn->setText("영수증 보기");
+                    receiptBtn->setText("보기");
                     receiptBtn->setStyleSheet("background-color: #2196F3; color: white;");
                     receiptBtn->setProperty("receiptPath", destPath);
                     int id = ui->tableAc->item(row, 1)->data(Qt::UserRole).toInt();
 
-                    // DB 업데이
+                    // DB 업데이트
                     if (id > 0) {
                         QSqlQuery updateQuery(db);
                         updateQuery.prepare("UPDATE transactions SET receiptImage = ? WHERE id = ?");
@@ -762,8 +814,14 @@ void MainWindow::addAccountRow()
     ui->tableAc->setItem(row, 2, makeItem(""));
     ui->tableAc->setItem(row, 3, makeItem(""));
     ui->tableAc->setItem(row, 4, makeItem("0"));
-    ui->tableAc->setItem(row, 5, makeItem("지출"));
     ui->tableAc->item(row, 1)->setData(Qt::UserRole, 0);
+
+    // 수입/지출 콤보박스 (디폴트: 지출)
+    QComboBox *typeCombo = new QComboBox();
+    typeCombo->addItems(ACCOUNT_TYPES);
+    typeCombo->setCurrentText("지출");
+    typeCombo->setStyleSheet("QComboBox { qproperty-alignment: AlignCenter; }");
+    ui->tableAc->setCellWidget(row, 5, typeCombo);
 
     QPushButton *receiptBtn = new QPushButton("첨부");
     receiptBtn->setStyleSheet("background-color: gray; color: white;");
@@ -772,17 +830,17 @@ void MainWindow::addAccountRow()
         if (receiptPath.isEmpty()) {
             QString filePath = QFileDialog::getOpenFileName(this, "영수증 선택", "", "Images (*.png *.jpg *.jpeg)");
             if (!filePath.isEmpty()) {
-                QString destDir = QDir::homePath() + "/IMCYouth/receipts/";
+                QString destDir = BASE_PATH + "/receipts/";
                 QDir().mkpath(destDir);
                 QString fileName = QFileInfo(filePath).fileName();
                 QString destPath = destDir + fileName;
                 QFile::copy(filePath, destPath);
-                receiptBtn->setText("영수증 보기");
+                receiptBtn->setText("보기");
                 receiptBtn->setStyleSheet("background-color: #2196F3; color: white;");
                 receiptBtn->setProperty("receiptPath", destPath);
 
                 // DB에 저장된 행이면 바로 업데이트
-                int id = ui->tableAc->item(row, 0)->data(Qt::UserRole).toInt();
+                int id = ui->tableAc->item(row, 1)->data(Qt::UserRole).toInt();
                 if (id > 0) {
                     QSqlQuery updateQuery(db);
                     updateQuery.prepare("UPDATE transactions SET receiptImage = ? WHERE id = ?");
@@ -799,6 +857,7 @@ void MainWindow::addAccountRow()
     ui->tableAc->setCellWidget(row, 6, receiptBtn);
     ui->tableAc->editItem(ui->tableAc->item(row, 1));
 }
+
 void MainWindow::deleteAccountRow()
 {
     int row = ui->tableAc->currentRow();
@@ -849,6 +908,8 @@ void MainWindow::saveAccount()
         }
     }
     QMessageBox::information(this, "저장 완료", "저장되었습니다!");
+    loadAccount();
+    updateAccountCharts();
 }
 
 void MainWindow::updateAccountCharts()
@@ -857,7 +918,7 @@ void MainWindow::updateAccountCharts()
 
     // 수입/지출 합계 계산
     QSqlQuery query(db);
-    query.prepare("SELECT type, SUM(amount) FROM transactions WHERE date LIKE ? GROUP BY type");
+    query.prepare("SELECT type, SUM(amount) FROM transactions WHERE date LIKE ? AND isBlack=0 GROUP BY type");
     query.addBindValue(yearMonth + "-%");
     query.exec();
 
@@ -873,14 +934,17 @@ void MainWindow::updateAccountCharts()
     QPieSeries *pieSeries = new QPieSeries();
     if (income == 0 && expense == 0) {
         pieSeries->append("No Data", 1);
+        pieSeries->slices().at(0)->setColor(CHART_PastelBlue[2]);
     } else {
         pieSeries->append("수입 " + QString::number(income), income);
         pieSeries->append("지출 " + QString::number(expense), expense);
+        pieSeries->slices().at(0)->setColor(CHART_PastelBlue[0]); // 수입
+        pieSeries->slices().at(1)->setColor(CHART_PastelBlue[2]); // 지출
     }
 
     QChart *pieChart = new QChart();
     pieChart->addSeries(pieSeries);
-    pieChart->setTitle("수입 / 지출 비율");
+    pieChart->setTitle("수입 / 지출");
     pieChart->legend()->show();
 
     QChartView *pieView = new QChartView(pieChart);
@@ -902,12 +966,16 @@ void MainWindow::updateAccountCharts()
     // 막대그래프 (월별 수입/지출)
     QBarSet *incomeSet = new QBarSet("수입");
     QBarSet *expenseSet = new QBarSet("지출");
+    incomeSet->setColor(CHART_PastelBlue[0]);       // 수입 막대 색상
+    expenseSet->setColor(CHART_PastelBlue[2]);      // 지출 막대 색상
+    incomeSet->setBorderColor(CHART_PastelBlue[1]);
+    expenseSet->setBorderColor(CHART_PastelBlue[1]);
     QStringList monthLabels;
 
     int year = ui->dateAc->date().year();
     for (int m = 1; m <= 12; m++) {
         QSqlQuery q(db);
-        q.prepare("SELECT type, SUM(amount) FROM transactions WHERE date LIKE ? GROUP BY type");
+        q.prepare("SELECT type, SUM(amount) FROM transactions WHERE date LIKE ? AND isBlack=0 GROUP BY type");
         q.addBindValue(QString::number(year) + "-" + QString("%1").arg(m, 2, 10, QChar('0')) + "-%");
         q.exec();
 
@@ -1205,4 +1273,261 @@ void MainWindow::saveMember()
 
     QMessageBox::information(this, "저장 완료", "멤버 정보가 저장되었습니다!");
     loadMembers();
+}
+
+// ---------------------------------------------- break --------------------------------------------------------
+
+void MainWindow::loadBreak()
+{
+    // 브레이크머니 모드: isBlack=1 항목만 조회
+    QString yearMonth = ui->dateAc->date().toString("yyyy-MM");
+
+    QSqlQuery query(db);
+    query.prepare("SELECT id, date, category, description, amount, type, receiptImage FROM transactions WHERE date LIKE ? AND isBlack=1 ORDER BY date ASC");
+    query.addBindValue(yearMonth + "-%");
+    query.exec();
+
+    ui->tableAc->setRowCount(0);
+
+    int index = 1;
+    while (query.next()) {
+        int row = ui->tableAc->rowCount();
+        ui->tableAc->insertRow(row);
+
+        // 가운데 정렬 아이템 생성 람다
+        auto makeItem = [](QString text) {
+            QTableWidgetItem *item = new QTableWidgetItem(text);
+            item->setTextAlignment(Qt::AlignCenter);
+            return item;
+        };
+
+        // 인덱스 (수정 불가)
+        QTableWidgetItem *indexItem = new QTableWidgetItem(QString::number(index++));
+        indexItem->setTextAlignment(Qt::AlignCenter);
+        indexItem->setFlags(indexItem->flags() & ~Qt::ItemIsEditable);
+        ui->tableAc->setItem(row, 0, indexItem);
+
+        ui->tableAc->setItem(row, 1, makeItem(query.value(1).toString())); // date
+        ui->tableAc->setItem(row, 2, makeItem(query.value(2).toString())); // category
+        ui->tableAc->setItem(row, 3, makeItem(query.value(3).toString())); // description
+        ui->tableAc->setItem(row, 4, makeItem(query.value(4).toString())); // amount
+        ui->tableAc->item(row, 1)->setData(Qt::UserRole, query.value(0).toInt()); // id 저장
+
+        // 수입/지출 콤보박스
+        QComboBox *typeCombo = new QComboBox();
+        typeCombo->addItems(ACCOUNT_TYPES);
+        typeCombo->setCurrentText(query.value(5).toString());
+        typeCombo->setStyleSheet("QComboBox { qproperty-alignment: AlignCenter; }");
+        ui->tableAc->setCellWidget(row, 5, typeCombo);
+
+        // 영수증 버튼
+        QString receiptPath = query.value(6).toString();
+        QPushButton *receiptBtn = new QPushButton();
+        if (receiptPath.isEmpty()) {
+            receiptBtn->setText("첨부");
+            receiptBtn->setStyleSheet("background-color: gray; color: white;");
+        } else {
+            receiptBtn->setText("보기");
+            receiptBtn->setStyleSheet("background-color: #2196F3; color: white;");
+        }
+        receiptBtn->setProperty("receiptPath", receiptPath);
+        connect(receiptBtn, &QPushButton::clicked, this, [this, row, receiptBtn](){
+            QString path = receiptBtn->property("receiptPath").toString();
+            if (path.isEmpty()) {
+                QString filePath = QFileDialog::getOpenFileName(this, "영수증 선택", "", "Images (*.png *.jpg *.jpeg)");
+                if (!filePath.isEmpty()) {
+                    QString destDir = BASE_PATH + "/receipts/";
+                    QDir().mkpath(destDir);
+                    QString fileName = QFileInfo(filePath).fileName();
+                    QString destPath = destDir + fileName;
+                    QFile::copy(filePath, destPath);
+                    receiptBtn->setText("보기");
+                    receiptBtn->setStyleSheet("background-color: #2196F3; color: white;");
+                    receiptBtn->setProperty("receiptPath", destPath);
+                    int id = ui->tableAc->item(row, 1)->data(Qt::UserRole).toInt();
+                    if (id > 0) {
+                        QSqlQuery updateQuery(db);
+                        updateQuery.prepare("UPDATE transactions SET receiptImage = ? WHERE id = ?");
+                        updateQuery.addBindValue(destPath);
+                        updateQuery.addBindValue(id);
+                        updateQuery.exec();
+                    }
+                }
+            } else {
+                QDesktopServices::openUrl(QUrl::fromLocalFile(path));
+            }
+        });
+        ui->tableAc->setCellWidget(row, 6, receiptBtn);
+    }
+    updateBreakCharts();
+}
+
+void MainWindow::addBreakRow()
+{
+    int row = ui->tableAc->rowCount();
+    ui->tableAc->insertRow(row);
+
+    auto makeItem = [](QString text) {
+        QTableWidgetItem *item = new QTableWidgetItem(text);
+        item->setTextAlignment(Qt::AlignCenter);
+        return item;
+    };
+
+    QString date = QDate::currentDate().toString("yyyy-MM-dd");
+
+    // 인덱스 (수정 불가)
+    QTableWidgetItem *indexItem = new QTableWidgetItem(QString::number(row + 1));
+    indexItem->setTextAlignment(Qt::AlignCenter);
+    indexItem->setFlags(indexItem->flags() & ~Qt::ItemIsEditable);
+    ui->tableAc->setItem(row, 0, indexItem);
+
+    ui->tableAc->setItem(row, 1, makeItem(date));
+    ui->tableAc->setItem(row, 2, makeItem(""));
+    ui->tableAc->setItem(row, 3, makeItem(""));
+    ui->tableAc->setItem(row, 4, makeItem("0"));
+    ui->tableAc->item(row, 1)->setData(Qt::UserRole, 0);
+
+    // 수입/지출 콤보박스 (디폴트: 지출)
+    QComboBox *typeCombo = new QComboBox();
+    typeCombo->addItems(ACCOUNT_TYPES);
+    typeCombo->setCurrentText("지출");
+    typeCombo->setStyleSheet("QComboBox { qproperty-alignment: AlignCenter; }");
+    ui->tableAc->setCellWidget(row, 5, typeCombo);
+
+    QPushButton *receiptBtn = new QPushButton("첨부");
+    receiptBtn->setStyleSheet("background-color: gray; color: white;");
+    ui->tableAc->setCellWidget(row, 6, receiptBtn);
+
+    ui->tableAc->editItem(ui->tableAc->item(row, 1));
+}
+
+void MainWindow::deleteBreakRow()
+{
+    QList<QTableWidgetItem*> selected = ui->tableAc->selectedItems();
+    if (selected.isEmpty()) return;
+
+    int row = ui->tableAc->row(selected.first());
+    int id = ui->tableAc->item(row, 1)->data(Qt::UserRole).toInt();
+
+    // DB에 저장된 항목이면 삭제
+    if (id > 0) {
+        QSqlQuery query(db);
+        query.prepare("DELETE FROM transactions WHERE id = ?");
+        query.addBindValue(id);
+        query.exec();
+    }
+    ui->tableAc->removeRow(row);
+}
+
+void MainWindow::saveBreak()
+{
+    for (int row = 0; row < ui->tableAc->rowCount(); row++) {
+        int id = ui->tableAc->item(row, 1)->data(Qt::UserRole).toInt();
+        QString date = ui->tableAc->item(row, 1)->text();
+        QString category = ui->tableAc->item(row, 2) ? ui->tableAc->item(row, 2)->text() : "";
+        QString description = ui->tableAc->item(row, 3) ? ui->tableAc->item(row, 3)->text() : "";
+        int amount = ui->tableAc->item(row, 4) ? ui->tableAc->item(row, 4)->text().toInt() : 0;
+        QComboBox *typeCombo = qobject_cast<QComboBox*>(ui->tableAc->cellWidget(row, 5));
+        QString type = typeCombo ? typeCombo->currentText() : "지출";
+
+        if (id > 0) {
+            // 기존 항목 업데이트
+            QSqlQuery query(db);
+            query.prepare("UPDATE transactions SET date=?, category=?, description=?, amount=?, type=? WHERE id=?");
+            query.addBindValue(date);
+            query.addBindValue(category);
+            query.addBindValue(description);
+            query.addBindValue(amount);
+            query.addBindValue(type);
+            query.addBindValue(id);
+            query.exec();
+        } else {
+            // 새 항목은 isBlack=1 (브레이크머니)로 저장
+            QSqlQuery query(db);
+            query.prepare("INSERT INTO transactions (date, category, description, amount, type, isBlack) VALUES (?,?,?,?,?,1)");
+            query.addBindValue(date);
+            query.addBindValue(category);
+            query.addBindValue(description);
+            query.addBindValue(amount);
+            query.addBindValue(type);
+            query.exec();
+        }
+    }
+    QMessageBox::information(this, "저장 완료", "저장되었습니다!");
+    loadBreak();
+    updateBreakCharts();
+}
+
+void MainWindow::updateBreakCharts()
+{
+    QString yearMonth = ui->dateAc->date().toString("yyyy-MM");
+
+    // 그래프1: 공식회계 vs 브레이크머니 비율 (파이차트)
+    // isBlack=0: 공식회계, isBlack=1: 브레이크머니 지출 합계 비교
+    QSqlQuery q1(db);
+    q1.prepare("SELECT SUM(amount), isBlack FROM transactions WHERE date LIKE ? AND type='지출' GROUP BY isBlack");
+    q1.addBindValue(yearMonth + "-%");
+    q1.exec();
+
+    QPieSeries *pieSeries = new QPieSeries();
+    int sliceIndex = 0;
+    while (q1.next()) {
+        int amount = q1.value(0).toInt();
+        bool isBlack = q1.value(1).toBool();
+        pieSeries->append(isBlack ? "break" : "공식", amount);
+        pieSeries->slices().at(sliceIndex)->setColor(isBlack ? CHART_PastelBlue[2] : CHART_PastelBlue[0]);
+        sliceIndex++;
+    }
+    if (pieSeries->count() == 0) {
+        pieSeries->append("No Data", 1);
+        pieSeries->slices().at(0)->setColor(CHART_PastelBlue[2]);
+    }
+
+    QChart *pieChart = new QChart();
+    pieChart->addSeries(pieSeries);
+    pieChart->setTitle("IN / OUT");
+    pieChart->legend()->show();
+
+    QChartView *pieView = new QChartView(pieChart);
+    pieView->setRenderHint(QPainter::Antialiasing);
+
+    // 기존 차트 제거 후 새 차트 삽입
+    QLayout *old1 = ui->chartPieAc->layout();
+    if (old1) { QLayoutItem *item; while ((item = old1->takeAt(0))) { delete item->widget(); delete item; } delete old1; }
+    QVBoxLayout *l1 = new QVBoxLayout(ui->chartPieAc);
+    l1->addWidget(pieView);
+    l1->setContentsMargins(0,0,0,0);
+
+    // 그래프2: 브레이크머니 카테고리별 비율 (파이차트)
+    // isBlack=1 항목들 중 카테고리별 지출 금액 비율
+    QSqlQuery q2(db);
+    q2.prepare("SELECT category, SUM(amount) FROM transactions WHERE date LIKE ? AND isBlack=1 GROUP BY category");
+    q2.addBindValue(yearMonth + "-%");
+    q2.exec();
+
+    QPieSeries *pieSeries2 = new QPieSeries();
+    while (q2.next()) {
+        pieSeries2->append(q2.value(0).toString(), q2.value(1).toInt());
+    }
+    if (pieSeries2->count() == 0) pieSeries2->append("No Data", 1); // 데이터 없을때 빈 차트 방지
+
+    // 모든 슬라이스 추가 후 색상 지정
+    for (int i = 0; i < pieSeries2->slices().size(); i++) {
+        pieSeries2->slices().at(i)->setColor(CHART_PastelBlue[i % 3]);
+    }
+
+    QChart *pieChart2 = new QChart();
+    pieChart2->addSeries(pieSeries2);
+    pieChart2->setTitle("카테고리별");
+    pieChart2->legend()->show();
+
+    QChartView *pieView2 = new QChartView(pieChart2);
+    pieView2->setRenderHint(QPainter::Antialiasing);
+
+    // 기존 차트 제거 후 새 차트 삽입
+    QLayout *old2 = ui->chartBarAc->layout();
+    if (old2) { QLayoutItem *item; while ((item = old2->takeAt(0))) { delete item->widget(); delete item; } delete old2; }
+    QVBoxLayout *l2 = new QVBoxLayout(ui->chartBarAc);
+    l2->addWidget(pieView2);
+    l2->setContentsMargins(0,0,0,0);
 }
