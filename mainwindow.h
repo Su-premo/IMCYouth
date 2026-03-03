@@ -51,6 +51,15 @@ private:
 
     // ===== break 비밀번호 (변경 시 여기만 수정) =====
     const QString BREAK_PASSWORD = "0000";
+
+    bool isBreakMode = false;
+
+    // ===== 차트 색상 팔레트 (변경 시 여기만 수정) =====
+    const QList<QColor> CHART_PastelBlue = {
+        QColor("#BED0E8"),
+        QColor("#CAE0EF"),
+        QColor("#DBEEF2")
+    };
     // ==================================================
 
     void initDatabase();
@@ -74,7 +83,6 @@ private:
     void saveMember();
     void searchMemberByName();
 
-    void initBreakTab();
     void loadBreak();
     void saveBreak();
     void addBreakRow();

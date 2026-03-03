@@ -24,7 +24,7 @@
        </size>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>2</number>
       </property>
       <property name="iconSize">
        <size>
@@ -331,87 +331,6 @@
             <string>저장</string>
            </property>
           </widget>
-         </item>
-        </layout>
-       </widget>
-      </widget>
-      <widget class="QWidget" name="tab_4">
-       <attribute name="title">
-        <string/>
-       </attribute>
-       <widget class="QWidget" name="horizontalLayoutWidget_break">
-        <property name="geometry">
-         <rect>
-          <x>20</x>
-          <y>10</y>
-          <width>1441</width>
-          <height>51</height>
-         </rect>
-        </property>
-        <layout class="QHBoxLayout" name="horizontalLayout_break">
-         <item>
-          <widget class="QDateEdit" name="dateBreak"/>
-         </item>
-         <item>
-          <widget class="QPushButton" name="btnSearchBreak">
-           <property name="text">
-            <string>조회</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="btnAddBreak">
-           <property name="text">
-            <string>추가</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="btnDeleteBreak">
-           <property name="text">
-            <string>삭제</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="btnSaveBreak">
-           <property name="text">
-            <string>저장</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </widget>
-       <widget class="QWidget" name="horizontalLayoutWidget_break2">
-        <property name="geometry">
-         <rect>
-          <x>20</x>
-          <y>70</y>
-          <width>911</width>
-          <height>821</height>
-         </rect>
-        </property>
-        <layout class="QHBoxLayout" name="horizontalLayout_break2">
-         <item>
-          <widget class="QTableWidget" name="tableBreak"/>
-         </item>
-        </layout>
-       </widget>
-       <widget class="QWidget" name="verticalLayoutWidget_break">
-        <property name="geometry">
-         <rect>
-          <x>940</x>
-          <y>70</y>
-          <width>521</width>
-          <height>821</height>
-         </rect>
-        </property>
-        <layout class="QVBoxLayout" name="verticalLayout_break">
-         <item>
-          <widget class="QWidget" name="chartPieBreak" native="true"/>
-         </item>
-         <item>
-          <widget class="QWidget" name="chartBarBreak" native="true"/>
          </item>
         </layout>
        </widget>
