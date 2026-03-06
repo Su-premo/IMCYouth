@@ -1,0 +1,11 @@
+<!DOCTYPE RCC>
+<RCC version="1.0">
+    <qresource prefix="/fonts">
+        <file alias="Cafe24Behappy.ttf">fonts/Cafe24Behappy.ttf</file>
+        <file alias="Cafe24OhsquareAir-v2.0.ttf">fonts/Cafe24OhsquareAir-v2.0.ttf</file>
+        <file alias="Cafe24Supermagic-Regular-v1.0.ttf">fonts/Cafe24Supermagic-Regular-v1.0.ttf</file>
+        <file alias="NEXON-Kart-Gothic-Medium.ttf">fonts/NEXON-Kart-Gothic-Medium.ttf</file>
+        <file alias="NEXON-Kart-Gothic-Bold.ttf">fonts/NEXON-Kart-Gothic-Bold.ttf</file>
+        <file alias="Danjo-bold-Regular.otf">fonts/Danjo-bold-Regular.otf</file>
+    </qresource>
+</RCC>

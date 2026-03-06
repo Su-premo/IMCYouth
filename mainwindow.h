@@ -60,6 +60,12 @@ private:
         QColor("#CAE0EF"),
         QColor("#DBEEF2")
     };
+
+    const QList<QColor> CHART_PastelYellow = {
+        QColor("#F7F3E8"),
+        QColor("#F2F1AC"),
+        QColor("#D1D066")
+    };
     // ==================================================
 
     void initDatabase();

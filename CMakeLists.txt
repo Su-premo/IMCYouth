@@ -25,6 +25,7 @@ set(PROJECT_SOURCES
         attendanceoverview.cpp
         attendanceoverview.h
         attendanceoverview.ui
+        fonts.qrc
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)

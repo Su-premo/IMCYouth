@@ -1,22 +1,43 @@
 #include "mainwindow.h"
 
 #include <QApplication>
+#include <QFontDatabase>
 
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
-    MainWindow w;
-
-    w.setWindowTitle("권라면");
 
     // ===== 폰트 지정 =====
-    #ifdef Q_OS_WIN
-        QFont font("Malgun Gothic", 10); // Windows: 맑은 고딕
-    #else
-        QFont font("Noto Sans KR", 10);  // Linux: Noto
-    #endif
+    // 폰트 등록
+    QFontDatabase::addApplicationFont(":/fonts/Cafe24Behappy.ttf");
+    QFontDatabase::addApplicationFont(":/fonts/Cafe24OhsquareAir-v2.0.ttf");
+    QFontDatabase::addApplicationFont(":/fonts/Cafe24Supermagic-Regular-v1.0.ttf");
+    QFontDatabase::addApplicationFont(":/fonts/Cafe24Supermagic-Regular-v1.0.ttf");
+    QFontDatabase::addApplicationFont(":/fonts/NEXON-Kart-Gothic-Medium.ttf");
+    QFontDatabase::addApplicationFont(":/fonts/NEXON-Kart-Gothic-Bold.ttf");
+    QFontDatabase::addApplicationFont(":/fonts/Danjo-bold-Regular.otf");
+
+    // 폰트 지정 (하나 선택)
+    // Cafe24 Behappy / Cafe24 Ohsquare air / Cafe24 Supermagic / Kartrider / Danjo-bold
+    QFont font("Kartrider", 11);
     font.setBold(false);
     a.setFont(font);
+
+    int id = QFontDatabase::addApplicationFont(":/fonts/Danjo-bold-Regular.otf");
+    qDebug() << "NEXON id:" << id;
+    qDebug() << "NEXON families:" << QFontDatabase::applicationFontFamilies(id);
+
+    // ===== 윈도우 생성 =====
+    MainWindow w;
+    w.setWindowTitle("권라면과 안성탕면");
+
+//    #ifdef Q_OS_WIN
+//        QFont font("Malgun Gothic", 10); // Windows: 맑은 고딕
+//    #else
+//        QFont font("Noto Sans KR", 10);  // Linux: Noto
+//    #endif
+//    font.setBold(false);
+//    a.setFont(font);
 
     // ===== 컬러 팔레트 =====
     // 베이스: #f7f3e8 / 미듐: #f2f1ac / 포인트: #d1d066
@@ -31,7 +52,7 @@ int main(int argc, char *argv[])
     w.findChild<QTabWidget*>()->setStyleSheet(
 //        "QMenuBar { background-color: #d1d066; }"
         "QTabBar::tab { min-width: 333px; min-height: 50px; padding: 6px; "
-        "font-family: 'Noto Sans KR'; font-size: 10pt; "
+        "font-size: 12pt; font-weight: 600; "
         "border: 1px solid #c0c0c0; border-bottom: none; }"
         "QTabBar::tab:selected { font-weight: 610; background-color: #d1d066; "
         "border: 1px solid #d1d066; border-bottom: none; color: white; }"
@@ -81,7 +102,6 @@ int main(int argc, char *argv[])
         "QDateEdit { qproperty-alignment: AlignCenter; }"
     );
 */
-
 
     // 프로그램 시작시 출석 페이지로 로드
     w.findChild<QTabWidget*>()->setCurrentIndex(0);

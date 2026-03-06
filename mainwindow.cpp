@@ -197,7 +197,7 @@ void MainWindow::initAccountTab()
 
     // 테이블 컬럼 설정
     ui->tableAc->setColumnCount(7);
-    ui->tableAc->setHorizontalHeaderLabels({"#", "Date", "Category", "Description", "Amount", "Type", "Receipt"});
+    ui->tableAc->setHorizontalHeaderLabels({"#", "날짜", "항목", "설명", "금액", "구분", "영수증"});
     ui->tableAc->verticalHeader()->hide();
     ui->tableAc->horizontalHeader()->setStretchLastSection(false);
     ui->tableAc->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Fixed);
@@ -238,21 +238,23 @@ void MainWindow::initMembersTab()
 {
     auto setupTable = [](QTableWidget *table) {
         table->setColumnCount(7);
-        table->setHorizontalHeaderLabels({"#", "Name", "BirthDate", "Phone", "Address", "Workplace", "Notes"});
+        table->setHorizontalHeaderLabels({"#", "이름", "생년월일", "연락처", "주소", "소속", "비고"});
         table->verticalHeader()->hide();
         table->setSelectionBehavior(QAbstractItemView::SelectRows);
         table->setEditTriggers(QAbstractItemView::DoubleClicked);
         // # 컬럼만 고정, 나머지 자동 분배
         table->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Fixed);
-        table->setColumnWidth(0, 40);
-        table->setColumnWidth(1, 100);  // Name
-        table->setColumnWidth(2, 170);  // BirthDate
-        table->setColumnWidth(3, 170);  // Phone
+        table->setColumnWidth(0, 35);
+        table->setColumnWidth(1, 80);  // Name
+        table->setColumnWidth(2, 100);  // BirthDate
+        table->setColumnWidth(3, 130);  // Phone
+        table->setColumnWidth(4, 335);
+        table->setColumnWidth(5, 220);
 //        table->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Stretch);  // Name
 //        table->horizontalHeader()->setSectionResizeMode(2, QHeaderView::Stretch);  // BirthDate
 //        table->horizontalHeader()->setSectionResizeMode(3, QHeaderView::Stretch);  // Phone
-        table->horizontalHeader()->setSectionResizeMode(4, QHeaderView::Stretch);  // Address
-        table->horizontalHeader()->setSectionResizeMode(5, QHeaderView::Stretch);  // Workplace
+//        table->horizontalHeader()->setSectionResizeMode(4, QHeaderView::Stretch);  // Address
+//        table->horizontalHeader()->setSectionResizeMode(5, QHeaderView::Stretch);  // Workplace
         table->horizontalHeader()->setSectionResizeMode(6, QHeaderView::Stretch);  // Notes
     };
 
@@ -274,6 +276,7 @@ void MainWindow::initMembersTab()
     // 일반 테이블 3 : 미출석 테이블 1 비율
     ui->tableMembers->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     ui->tableMembersInactive->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+//    ui->tableMembers->setWordWrap(true);                // 내용 감싸기
     ui->tableMembers->setMinimumHeight(330);
     ui->tableMembersInactive->setMaximumHeight(230);
 
@@ -387,7 +390,7 @@ void MainWindow::loadAttendance()
     // 컬럼 구성 (이름 + 토요일 + 주일 1st/2nd)
     QStringList headers;
     headers << "#";
-    headers << "Name";
+    headers << "이름";
     QList<QPair<QDate, QString>> columns; // 날짜, service
 
     // 날짜 순서대로 토/일 합쳐서 정렬
@@ -592,12 +595,12 @@ void MainWindow::updateCharts()
         int absent = data.second - present;
         if (data.second == 0) {
             series->append("No Data", 1);
-            series->slices().at(0)->setColor(CHART_PastelBlue[2]);
+            series->slices().at(0)->setColor(CHART_PastelYellow[0]);
         } else {
             series->append("출석 " + QString::number(present), present);
             series->append("결석 " + QString::number(absent), absent);
-            series->slices().at(0)->setColor(CHART_PastelBlue[0]); // 출석
-            series->slices().at(1)->setColor(CHART_PastelBlue[2]); // 결석
+            series->slices().at(0)->setColor(CHART_PastelYellow[2]); // 출석
+            series->slices().at(1)->setColor(CHART_PastelYellow[0]); // 결석
         }
 
         QChart *chart = new QChart();
@@ -629,8 +632,8 @@ void MainWindow::updateCharts()
 
     // 연간 막대그래프
     QBarSet *barSet = new QBarSet("평균 출석률(%)");
-    barSet->setColor(CHART_PastelBlue[0]);          // 막대 색상
-    barSet->setBorderColor(CHART_PastelBlue[1]);    // 막대 테두리 색상
+    barSet->setColor(CHART_PastelYellow[1]);          // 막대 색상
+    barSet->setBorderColor(CHART_PastelYellow[2]);    // 막대 테두리 색상
     QStringList monthLabels;
     for (int m = 1; m <= 12; m++) {
         QSqlQuery q(db);
@@ -668,14 +671,17 @@ void MainWindow::updateCharts()
 
     QBarCategoryAxis *axisX = new QBarCategoryAxis();
     axisX->append(monthLabels);
-    axisX->setLabelsAngle(-45);  // 레이블 45도 기울이기
+//    axisX->setLabelsAngle(-15);  // 레이블 45도 기울이기
     axisX->setLabelsVisible(true);
+    axisX->setLabelsFont(QFont("kartrider", 6));
     barChart->addAxis(axisX, Qt::AlignBottom);
     barSeries->attachAxis(axisX);
-    barChart->setMargins(QMargins(0, 0, 0, 20)); // 하단 여백 추가
+    barChart->setMargins(QMargins(0, 10, 10, 10)); // 하단 여백 추가
 
-    barChart->setMargins(QMargins(0, 0, 0, 0));
-    // barChart->layout()->setContentsMargins(0, 0, 0, 0);
+    // 차트 플롯 영역 축소해서 레이블 공간 확보
+    barChart->legend()->setAlignment(Qt::AlignTop);
+
+    // barChart->layout()->setContentsMargins(0, 0, 0, 20);
 
     // 연도 월별 막대 그래프
     QValueAxis *axisY = new QValueAxis();
@@ -687,6 +693,7 @@ void MainWindow::updateCharts()
 
     QChartView *barView = new QChartView(barChart);
     barView->setRenderHint(QPainter::Antialiasing);
+    barView->setContentsMargins(0, 0, 0, 20);
 
     QLayout *old = ui->chartBarAt->layout();
     if (old) {
@@ -934,12 +941,12 @@ void MainWindow::updateAccountCharts()
     QPieSeries *pieSeries = new QPieSeries();
     if (income == 0 && expense == 0) {
         pieSeries->append("No Data", 1);
-        pieSeries->slices().at(0)->setColor(CHART_PastelBlue[2]);
+        pieSeries->slices().at(0)->setColor(CHART_PastelYellow[2]);
     } else {
         pieSeries->append("수입 " + QString::number(income), income);
         pieSeries->append("지출 " + QString::number(expense), expense);
-        pieSeries->slices().at(0)->setColor(CHART_PastelBlue[0]); // 수입
-        pieSeries->slices().at(1)->setColor(CHART_PastelBlue[2]); // 지출
+        pieSeries->slices().at(0)->setColor(CHART_PastelYellow[1]); // 수입
+        pieSeries->slices().at(1)->setColor(CHART_PastelYellow[2]); // 지출
     }
 
     QChart *pieChart = new QChart();
@@ -966,10 +973,10 @@ void MainWindow::updateAccountCharts()
     // 막대그래프 (월별 수입/지출)
     QBarSet *incomeSet = new QBarSet("수입");
     QBarSet *expenseSet = new QBarSet("지출");
-    incomeSet->setColor(CHART_PastelBlue[0]);       // 수입 막대 색상
-    expenseSet->setColor(CHART_PastelBlue[2]);      // 지출 막대 색상
-    incomeSet->setBorderColor(CHART_PastelBlue[1]);
-    expenseSet->setBorderColor(CHART_PastelBlue[1]);
+    incomeSet->setColor(CHART_PastelYellow[1]);       // 수입 막대 색상
+    expenseSet->setColor(CHART_PastelYellow[2]);      // 지출 막대 색상
+    incomeSet->setBorderColor(CHART_PastelYellow[1]);
+    expenseSet->setBorderColor(CHART_PastelYellow[2]);
     QStringList monthLabels;
 
     int year = ui->dateAc->date().year();
@@ -997,11 +1004,12 @@ void MainWindow::updateAccountCharts()
 
     QChart *barChart = new QChart();
     barChart->addSeries(barSeries);
-    barChart->setTitle(QString::number(year) + "년 월별 수입/지출");
+    barChart->setTitle(QString::number(year) + "년 월별 수입 / 지출");
 
     QBarCategoryAxis *axisX = new QBarCategoryAxis();
     axisX->append(monthLabels);
-    axisX->setLabelsAngle(-45);
+//    axisX->setLabelsAngle(-15);
+    axisX->setLabelsFont(QFont("kartrider", 10));
     barChart->addAxis(axisX, Qt::AlignBottom);
     barSeries->attachAxis(axisX);
 
@@ -1099,6 +1107,9 @@ void MainWindow::loadMembers()
                 query.value(5).toString(), query.value(6).toString());
         }
     }
+    // 내용 길이에 따라 조정
+//    ui->tableMembers->resizeRowsToContents();
+//    ui->tableMembersInactive->resizeRowsToContents();
 }
 
 void MainWindow::searchMemberByName()
