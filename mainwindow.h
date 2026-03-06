@@ -41,9 +41,9 @@ private:
 
     // ===== 경로 설정 (Ubuntu ↔ Windows 전환 시 여기만 수정) =====
     // Ubuntu 개발 환경
-    const QString BASE_PATH = QDir::homePath() + "/IMCYouth";
+//    const QString BASE_PATH = QDir::homePath() + "/IMCYouth";
     // Windows 배포 환경
-//    const QString BASE_PATH = QCoreApplication::applicationDirPath();
+    const QString BASE_PATH = QCoreApplication::applicationDirPath();
     // =============================================================
 
     // 회계 타입 목록 - 나중에 여기서 추가/수정
@@ -59,6 +59,12 @@ private:
         QColor("#BED0E8"),
         QColor("#CAE0EF"),
         QColor("#DBEEF2")
+    };
+
+    const QList<QColor> CHART_PastelYellow = {
+        QColor("#F7F3E8"),
+        QColor("#F2F1AC"),
+        QColor("#D1D066")
     };
     // ==================================================
 
