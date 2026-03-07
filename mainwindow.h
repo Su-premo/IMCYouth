@@ -41,9 +41,9 @@ private:
 
     // ===== 경로 설정 (Ubuntu ↔ Windows 전환 시 여기만 수정) =====
     // Ubuntu 개발 환경
-//    const QString BASE_PATH = QDir::homePath() + "/IMCYouth";
+    const QString BASE_PATH = QDir::homePath() + "/IMCYouth";
     // Windows 배포 환경
-    const QString BASE_PATH = QCoreApplication::applicationDirPath();
+//    const QString BASE_PATH = QCoreApplication::applicationDirPath();
     // =============================================================
 
     // 회계 타입 목록 - 나중에 여기서 추가/수정
@@ -88,6 +88,7 @@ private:
     void deleteMember();
     void saveMember();
     void searchMemberByName();
+    int m_editingMemberRow = -1; // 현재 편집중인 행 (-1이면 편집 안함)
 
     void loadBreak();
     void saveBreak();

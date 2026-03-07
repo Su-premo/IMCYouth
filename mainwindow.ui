@@ -24,7 +24,7 @@
        </size>
       </property>
       <property name="currentIndex">
-       <number>2</number>
+       <number>1</number>
       </property>
       <property name="iconSize">
        <size>
@@ -172,9 +172,9 @@
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="btnAddAc">
+          <widget class="QPushButton" name="btnEditAc">
            <property name="text">
-            <string>추가</string>
+            <string>수정</string>
            </property>
           </widget>
          </item>
@@ -189,6 +189,29 @@
           <widget class="QPushButton" name="btnSaveAc">
            <property name="text">
             <string>저장</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btnAddAc">
+           <property name="maximumSize">
+            <size>
+             <width>120</width>
+             <height>16777215</height>
+            </size>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">QPushButton {
+    background: transparent;
+    border: none;
+    font-size: 11pt;
+}
+QPushButton:hover {
+    color: gray;
+}</string>
+           </property>
+           <property name="text">
+            <string>추가</string>
            </property>
           </widget>
          </item>
@@ -294,15 +317,9 @@
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="btnAddMember">
-           <property name="minimumSize">
-            <size>
-             <width>200</width>
-             <height>0</height>
-            </size>
-           </property>
+          <widget class="QPushButton" name="btnEditMember">
            <property name="text">
-            <string>추가</string>
+            <string>수정</string>
            </property>
           </widget>
          </item>
@@ -329,6 +346,35 @@
            </property>
            <property name="text">
             <string>저장</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btnAddMember">
+           <property name="minimumSize">
+            <size>
+             <width>200</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>30</width>
+             <height>16777215</height>
+            </size>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">QPushButton {
+    background: transparent;
+    border: none;
+    font-size: 11pt;
+}
+QPushButton:hover {
+    color: gray;
+}</string>
+           </property>
+           <property name="text">
+            <string>추가</string>
            </property>
           </widget>
          </item>

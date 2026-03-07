@@ -60,7 +60,7 @@ int main(int argc, char *argv[])
         "QTabWidget::pane { border: 1px solid #c0c0c0; background-color: #f7f3e8; }"
         "QHeaderView::section { padding-top: 6px; padding-bottom: 6px; background-color: #f2f1ac; }"
         "QLineEdit { qproperty-alignment: AlignCenter; }"
-        "QComboBox { qproperty-alignment: AlignCenter; }"
+        "QComboBox { qproperty-alignment: AlignCenter; color: black; }"
         "QSpinBox { qproperty-alignment: AlignCenter; }"
         "QDateEdit { qproperty-alignment: AlignCenter; }"
     );

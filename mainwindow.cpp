@@ -127,6 +127,51 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->btnAddMember, &QPushButton::clicked, this, &MainWindow::addMemberRow);
     connect(ui->btnDeleteMember, &QPushButton::clicked, this, &MainWindow::deleteMember);
     connect(ui->btnSaveMember, &QPushButton::clicked, this, &MainWindow::saveMember);
+
+    // 수정 버튼 클릭시 선택된 행 편집 가능으로 전환
+    connect(ui->btnEditMember, &QPushButton::clicked, this, [this](){
+        // 현재 선택된 테이블 확인
+        QTableWidget *activeTable = nullptr;
+        if (!ui->tableMembers->selectedItems().isEmpty())
+            activeTable = ui->tableMembers;
+        else if (!ui->tableMembersInactive->selectedItems().isEmpty())
+            activeTable = ui->tableMembersInactive;
+        if (!activeTable) return; // 선택된 행 없으면 종료
+
+        // 편집중인 행 번호 저장 + 편집 가능으로 전환
+        m_editingMemberRow = activeTable->currentRow();
+        activeTable->setEditTriggers(QAbstractItemView::DoubleClicked);
+        // 이름 컬럼부터 편집 시작
+        activeTable->editItem(activeTable->item(m_editingMemberRow, 1));
+    });
+
+    // 일반 테이블에서 다른 행 클릭시 편집 불가로 복귀
+    connect(ui->tableMembers, &QTableWidget::currentItemChanged, this, [this](QTableWidgetItem *current, QTableWidgetItem *previous){
+        if (!current || !previous) return;
+        // 다른 행으로 이동했을때만 편집 불가로 복귀
+        if (m_editingMemberRow != -1 && current->row() != m_editingMemberRow) {
+            // 편집중인 셀 닫기
+            if (previous) ui->tableMembers->closePersistentEditor(previous);
+            ui->tableMembers->clearFocus();
+            ui->tableMembers->setEditTriggers(QAbstractItemView::NoEditTriggers);
+            ui->tableMembersInactive->setEditTriggers(QAbstractItemView::NoEditTriggers);
+            m_editingMemberRow = -1; // 편집 상태 초기화
+        }
+    });
+
+    // 미출석 테이블에서 다른 행 클릭시 편집 불가로 복귀
+    connect(ui->tableMembersInactive, &QTableWidget::currentItemChanged, this, [this](QTableWidgetItem *current, QTableWidgetItem *previous){
+        if (!current || !previous) return;
+        // 다른 행으로 이동했을때만 편집 불가로 복귀
+        if (m_editingMemberRow != -1 && current->row() != m_editingMemberRow) {
+            // 편집중인 셀 닫기
+            if (previous) ui->tableMembersInactive->closePersistentEditor(previous);
+            ui->tableMembersInactive->clearFocus();
+            ui->tableMembers->setEditTriggers(QAbstractItemView::NoEditTriggers);
+            ui->tableMembersInactive->setEditTriggers(QAbstractItemView::NoEditTriggers);
+            m_editingMemberRow = -1; // 편집 상태 초기화
+        }
+    });
 }
 
 MainWindow::~MainWindow()
@@ -185,6 +230,12 @@ void MainWindow::initAttendanceTab()
 
     // 현재 월로 기본 설정
     ui->comboMonthAt->setCurrentIndex(QDate::currentDate().month() - 1);
+
+    // 월 콤보박스 가운데 정렬
+    ui->comboMonthAt->setEditable(true);
+    ui->comboMonthAt->lineEdit()->setAlignment(Qt::AlignCenter);
+    ui->comboMonthAt->setEditable(false);
+
     // 프로그램 실행 시 현재 월에 해당하는 출석부 자동으로 로드
     loadAttendance();
 }
@@ -241,7 +292,7 @@ void MainWindow::initMembersTab()
         table->setHorizontalHeaderLabels({"#", "이름", "생년월일", "연락처", "주소", "소속", "비고"});
         table->verticalHeader()->hide();
         table->setSelectionBehavior(QAbstractItemView::SelectRows);
-        table->setEditTriggers(QAbstractItemView::DoubleClicked);
+        table->setEditTriggers(QAbstractItemView::NoEditTriggers);                  // 기본 편집 불가
         // # 컬럼만 고정, 나머지 자동 분배
         table->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Fixed);
         table->setColumnWidth(0, 35);
@@ -772,8 +823,16 @@ void MainWindow::loadAccount()
                 if (!filePath.isEmpty()) {
                     QString destDir = BASE_PATH + "/receipts/";
                     QDir().mkpath(destDir);
-                    QString fileName = QFileInfo(filePath).fileName();
+
+//                    QString fileName = QFileInfo(filePath).fileName();
+//                    QString destPath = destDir + fileName;
+                    QString date = ui->tableAc->item(row, 1)->text();         // 날짜
+                    QString category = ui->tableAc->item(row, 2)->text();     // 항목
+                    QString index = ui->tableAc->item(row, 0)->text();        // 인덱스
+                    QString ext = QFileInfo(filePath).suffix();               // 확장자
+                    QString fileName = date + "_" + category + "_" + index + "." + ext;
                     QString destPath = destDir + fileName;
+
                     QFile::copy(filePath, destPath);
                     receiptBtn->setText("보기");
                     receiptBtn->setStyleSheet("background-color: #2196F3; color: white;");
@@ -1110,6 +1169,10 @@ void MainWindow::loadMembers()
     // 내용 길이에 따라 조정
 //    ui->tableMembers->resizeRowsToContents();
 //    ui->tableMembersInactive->resizeRowsToContents();
+
+    // 로드 후 편집 불가로 복귀
+    ui->tableMembers->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    ui->tableMembersInactive->setEditTriggers(QAbstractItemView::NoEditTriggers);
 }
 
 void MainWindow::searchMemberByName()
@@ -1283,6 +1346,10 @@ void MainWindow::saveMember()
     saveTable(ui->tableMembersInactive);
 
     QMessageBox::information(this, "저장 완료", "멤버 정보가 저장되었습니다!");
+    // 저장 후 편집 불가로 복귀
+    ui->tableMembers->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    ui->tableMembersInactive->setEditTriggers(QAbstractItemView::NoEditTriggers);
+
     loadMembers();
 }
 
@@ -1349,8 +1416,16 @@ void MainWindow::loadBreak()
                 if (!filePath.isEmpty()) {
                     QString destDir = BASE_PATH + "/receipts/";
                     QDir().mkpath(destDir);
-                    QString fileName = QFileInfo(filePath).fileName();
+
+//                    QString fileName = QFileInfo(filePath).fileName();
+//                    QString destPath = destDir + fileName;
+                    QString date = ui->tableAc->item(row, 1)->text();         // 날짜
+                    QString category = ui->tableAc->item(row, 2)->text();     // 항목
+                    QString index = ui->tableAc->item(row, 0)->text();        // 인덱스
+                    QString ext = QFileInfo(filePath).suffix();               // 확장자
+                    QString fileName = date + "_" + category + "_" + index + "." + ext;
                     QString destPath = destDir + fileName;
+
                     QFile::copy(filePath, destPath);
                     receiptBtn->setText("보기");
                     receiptBtn->setStyleSheet("background-color: #2196F3; color: white;");
