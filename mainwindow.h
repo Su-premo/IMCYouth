@@ -88,7 +88,6 @@ private:
     void deleteMember();
     void saveMember();
     void searchMemberByName();
-    int m_editingMemberRow = -1; // 현재 편집중인 행 (-1이면 편집 안함)
 
     void loadBreak();
     void saveBreak();
