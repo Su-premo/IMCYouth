@@ -120,6 +120,7 @@ MainWindow::MainWindow(QWidget *parent)
         if (isBreakMode) loadBreak();      // 브레이크머니 모드면 break 조회
         else loadAccount();                // 일반 모드면 회계 조회
     });
+
     // 회계 페이지 수정 버튼 클릭시 전체 테이블 편집 가능으로 전환 + 수정 모드 표시
     connect(ui->btnEditAc, &QPushButton::clicked, this, [this](){
         ui->tableAc->setEditTriggers(QAbstractItemView::DoubleClicked);
@@ -127,6 +128,22 @@ MainWindow::MainWindow(QWidget *parent)
         ui->btnEditAc->setStyleSheet(
             QString("background-color: %1;").arg(CHART_PastelYellow[2].name())
         );
+    });
+
+    // 금액 컬럼 실시간 콤마 추가
+    connect(ui->tableAc, &QTableWidget::itemChanged, this, [this](QTableWidgetItem *item){
+        if (item->column() != 4) return;                // 금액 컬럼만
+        QString text = item->text().remove(",");        // 콤마 제거
+        bool ok;
+        int value = text.toInt(&ok);
+        if (!ok) return;
+        // 콤마 포맷 적용
+        QString formatted = QLocale(QLocale::Korean).toString(value);
+        if (item->text() != formatted) {
+            ui->tableAc->blockSignals(true);            // 무한루프 방지
+            item->setText(formatted);
+            ui->tableAc->blockSignals(false);
+        }
     });
 
 
@@ -596,24 +613,32 @@ void MainWindow::updateCharts()
 
     // 토요일 / 1st / 2nd 출석률 계산
     auto calcRate = [&](QString service) -> QPair<int,int> {
-        int present = 0, total = 0;
+        int totalPresent = 0;
+        int sessionCount = 0; // 해당 서비스가 몇 번 있었는지
         int daysInMonth = QDate(year, month, 1).daysInMonth();
         for (int day = 1; day <= daysInMonth; day++) {
             QDate date(year, month, day);
             bool isSat = (date.dayOfWeek() == 6 && service == "");
             bool isSun = (date.dayOfWeek() == 7 && service != "");
             if (!isSat && !isSun) continue;
+
+            sessionCount++; // 해당 서비스 횟수 카운트
+
             QSqlQuery q(db);
-            q.prepare("SELECT SUM(isPresent), COUNT(*) FROM attendance WHERE date = ? AND service = ?");
+            q.prepare("SELECT SUM(isPresent) FROM attendance WHERE date = ? AND service = ?");
             q.addBindValue(date.toString("yyyy-MM-dd"));
             q.addBindValue(service);
             q.exec();
             if (q.next()) {
-                present += q.value(0).toInt();
-                total += q.value(1).toInt();
+                totalPresent += q.value(0).toInt();
             }
         }
-        return {present, total};
+        if (sessionCount == 0) return {0, totalMembers};
+
+        // 평균 출석자수 = 전체 출석합계 / 세션 횟수
+        int avgPresent = qRound((double)totalPresent / sessionCount);
+        int avgAbsent = totalMembers - avgPresent;
+        return {avgPresent, totalMembers};
     };
 
     auto makeChart = [&](QWidget *container, QString title, QPair<int,int> data) {
@@ -795,6 +820,14 @@ void MainWindow::loadAccount()
         connect(receiptBtn, &QPushButton::clicked, this, [this, row, receiptBtn](){
             QString path = receiptBtn->property("receiptPath").toString();
             if (path.isEmpty()) {
+                // 항목 채워졌는지 확인
+                QString date = ui->tableAc->item(row, 1) ? ui->tableAc->item(row, 1)->text() : "";
+                QString category = ui->tableAc->item(row, 2) ? ui->tableAc->item(row, 2)->text() : "";
+                QString description = ui->tableAc->item(row, 3) ? ui->tableAc->item(row, 3)->text() : "";
+                if (date.isEmpty() || category.isEmpty() || description.isEmpty()) {
+                    QMessageBox::warning(this, "입력 오류", "날짜, 항목, 설명을 먼저 입력해주세요!");
+                    return;
+                }
                 QString filePath = QFileDialog::getOpenFileName(this, "영수증 선택", "", "Images (*.png *.jpg *.jpeg)");
                 if (!filePath.isEmpty()) {
                     QString destDir = BASE_PATH + "/receipts/";
@@ -843,6 +876,12 @@ void MainWindow::addAccountRow()
     int row = ui->tableAc->rowCount();
     ui->tableAc->insertRow(row);
 
+    // 추가시 편집 가능으로 전환 + 수정 모드 표시
+    ui->tableAc->setEditTriggers(QAbstractItemView::DoubleClicked);
+    ui->btnEditAc->setStyleSheet(
+        QString("background-color: %1; color: white;").arg(CHART_PastelYellow[2].name())
+    );
+
     // 가운데 정렬
     auto makeItem = [](QString text) {
         QTableWidgetItem *item = new QTableWidgetItem(text);
@@ -875,6 +914,14 @@ void MainWindow::addAccountRow()
     connect(receiptBtn, &QPushButton::clicked, this, [this, row, receiptBtn](){
         QString receiptPath = receiptBtn->property("receiptPath").toString();
         if (receiptPath.isEmpty()) {
+            // 항목 채워졌는지 확인
+            QString date = ui->tableAc->item(row, 1) ? ui->tableAc->item(row, 1)->text() : "";
+            QString category = ui->tableAc->item(row, 2) ? ui->tableAc->item(row, 2)->text() : "";
+            QString description = ui->tableAc->item(row, 3) ? ui->tableAc->item(row, 3)->text() : "";
+            if (date.isEmpty() || category.isEmpty() || description.isEmpty()) {
+                QMessageBox::warning(this, "입력 오류", "날짜, 항목, 설명을 먼저 입력해주세요!");
+                return;
+            }
             QString filePath = QFileDialog::getOpenFileName(this, "영수증 선택", "", "Images (*.png *.jpg *.jpeg)");
             if (!filePath.isEmpty()) {
                 QString destDir = BASE_PATH + "/receipts/";
@@ -938,7 +985,8 @@ void MainWindow::saveAccount()
         QString date = ui->tableAc->item(row, 1)->text();
         QString category = ui->tableAc->item(row, 2) ? ui->tableAc->item(row, 2)->text() : "";
         QString description = ui->tableAc->item(row, 3) ? ui->tableAc->item(row, 3)->text() : "";
-        int amount = ui->tableAc->item(row, 4) ? ui->tableAc->item(row, 4)->text().toInt() : 0;
+        int amount = ui->tableAc->item(row, 4) ?
+            ui->tableAc->item(row, 4)->text().remove(",").toInt() : 0;
         QComboBox *typeCombo = qobject_cast<QComboBox*>(ui->tableAc->cellWidget(row, 5));
         QString type = typeCombo ? typeCombo->currentText() : "지출";
 
@@ -1193,6 +1241,12 @@ void MainWindow::addBreakRow()
     int row = ui->tableAc->rowCount();
     ui->tableAc->insertRow(row);
 
+    // 추가시 편집 가능으로 전환 + 수정 모드 표시
+    ui->tableAc->setEditTriggers(QAbstractItemView::DoubleClicked);
+    ui->btnEditAc->setStyleSheet(
+        QString("background-color: %1; color: white;").arg(CHART_PastelYellow[2].name())
+    );
+
     auto makeItem = [](QString text) {
         QTableWidgetItem *item = new QTableWidgetItem(text);
         item->setTextAlignment(Qt::AlignCenter);
@@ -1252,7 +1306,8 @@ void MainWindow::saveBreak()
         QString date = ui->tableAc->item(row, 1)->text();
         QString category = ui->tableAc->item(row, 2) ? ui->tableAc->item(row, 2)->text() : "";
         QString description = ui->tableAc->item(row, 3) ? ui->tableAc->item(row, 3)->text() : "";
-        int amount = ui->tableAc->item(row, 4) ? ui->tableAc->item(row, 4)->text().toInt() : 0;
+        int amount = ui->tableAc->item(row, 4) ?
+            ui->tableAc->item(row, 4)->text().remove(",").toInt() : 0;
         QComboBox *typeCombo = qobject_cast<QComboBox*>(ui->tableAc->cellWidget(row, 5));
         QString type = typeCombo ? typeCombo->currentText() : "지출";
 
@@ -1526,6 +1581,13 @@ void MainWindow::addMemberRow()
 {
     int row = ui->tableMembers->rowCount();
     ui->tableMembers->insertRow(row);
+
+    // 추가시 편집 가능으로 전환 + 수정 모드 표시
+    ui->tableMembers->setEditTriggers(QAbstractItemView::DoubleClicked);
+    ui->tableMembersInactive->setEditTriggers(QAbstractItemView::DoubleClicked);
+    ui->btnEditMember->setStyleSheet(
+        QString("background-color: %1; color: white;").arg(CHART_PastelYellow[2].name())
+    );
 
     QTableWidgetItem *indexItem = new QTableWidgetItem(QString::number(row + 1));
     indexItem->setTextAlignment(Qt::AlignCenter);

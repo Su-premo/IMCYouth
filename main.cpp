@@ -45,6 +45,7 @@ int main(int argc, char *argv[])
     a.setStyleSheet(
         "QMainWindow { background-color: #f7f3e8; }"
         "QWidget { background-color: #f7f3e8; }"
+//        "QCheckBox { background-color: transparent; border: none; }"
     );
 
     // 프로그램 창 사이즈 지정 및 포인트 스타일
