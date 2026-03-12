@@ -138,7 +138,7 @@ void AttendanceOverview::loadOverview(int year)
 
                 QString text = "-";
                 if (attendQuery.next()) {
-                    text = attendQuery.value(0).toBool() ? "O" : "X";
+                    text = attendQuery.value(0).toBool() ? "O" : "-";
                 }
                 QTableWidgetItem *item = new QTableWidgetItem(text);
                 item->setTextAlignment(Qt::AlignCenter);
