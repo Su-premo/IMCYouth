@@ -46,6 +46,8 @@ private:
 //    const QString BASE_PATH = QCoreApplication::applicationDirPath();
     // =============================================================
 
+    int currentOfficerId = -1;                      // 현재 로그인한 임원 id (-1: 미로그인)
+
     // 회계 타입 목록 - 나중에 여기서 추가/수정
     const QStringList ACCOUNT_TYPES = {"지출", "수입"};
 
@@ -68,6 +70,8 @@ private:
     };
     // ==================================================
 
+    bool eventFilter(QObject *obj, QEvent *event) override;
+
     void initDatabase();
     void initAttendanceTab();
     void initAccountTab();
@@ -83,17 +87,17 @@ private:
     void deleteAccountRow();
     void updateAccountCharts();      // 회계 그래프
 
-    void loadMembers();
-    void addMemberRow();
-    void deleteMember();
-    void saveMember();
-    void searchMemberByName();
-
     void loadBreak();
     void saveBreak();
     void addBreakRow();
     void deleteBreakRow();
     void updateBreakCharts();
+
+    void loadMembers();
+    void addMemberRow();
+    void deleteMember();
+    void saveMember();
+    void searchMemberByName();
 };
 
 #endif // MAINWINDOW_H
