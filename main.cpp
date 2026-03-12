@@ -1,7 +1,11 @@
 #include "mainwindow.h"
+#include "logindialog.h"
+#include "config.h"
 
 #include <QApplication>
 #include <QFontDatabase>
+#include <QSqlDatabase>
+#include <QSqlQuery>
 
 int main(int argc, char *argv[])
 {
@@ -27,17 +31,30 @@ int main(int argc, char *argv[])
     qDebug() << "NEXON id:" << id;
     qDebug() << "NEXON families:" << QFontDatabase::applicationFontFamilies(id);
 
+    // ===== DB =====
+    QDir().mkpath(BASE_PATH);
+    QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
+    db.setDatabaseName(BASE_PATH + "/imcyouth.db");
+    db.open();
+
+    // codes 테이블 먼저 생성
+    QSqlQuery query(db);
+    query.exec(R"(
+        CREATE TABLE IF NOT EXISTS codes (
+            name TEXT PRIMARY KEY,
+            value TEXT NOT NULL
+        )
+    )");
+
+    // ===== 프로그램 로그인 =====
+    LoginDialog login(db);
+    if (login.exec() != QDialog::Accepted) {
+        return 0;                       // 로그인 취소시 종료
+    }
+
     // ===== 윈도우 생성 =====
     MainWindow w;
     w.setWindowTitle("권라면과 안성탕면");
-
-//    #ifdef Q_OS_WIN
-//        QFont font("Malgun Gothic", 10); // Windows: 맑은 고딕
-//    #else
-//        QFont font("Noto Sans KR", 10);  // Linux: Noto
-//    #endif
-//    font.setBold(false);
-//    a.setFont(font);
 
     // ===== 컬러 팔레트 =====
     // 베이스: #f7f3e8 / 미듐: #f2f1ac / 포인트: #d1d066
@@ -45,7 +62,6 @@ int main(int argc, char *argv[])
     a.setStyleSheet(
         "QMainWindow { background-color: #f7f3e8; }"
         "QWidget { background-color: #f7f3e8; }"
-//        "QCheckBox { background-color: transparent; border: none; }"
     );
 
     // 프로그램 창 사이즈 지정 및 포인트 스타일
@@ -65,44 +81,6 @@ int main(int argc, char *argv[])
         "QSpinBox { qproperty-alignment: AlignCenter; }"
         "QDateEdit { qproperty-alignment: AlignCenter; }"
     );
-
-    // ------> QTabBar selected: #d0e8ff(하늘색) / QTabBar !selected: #f0f0f0(흰색) / pane: #c0c0c0(회색)
-//    w.findChild<QTabWidget*>()->setStyleSheet(
-//        "QTabBar::tab { min-width: 333px; min-height: 50px; padding: 6px; "
-//        "font-family: 'Noto Sans KR'; font-size: 10pt; "
-//        "border: 1px solid #c0c0c0; border-bottom: none; }"
-//        "QTabBar::tab:selected { font-weight: 610; background-color: #d0e8ff; "
-//        "border: 1px solid #a0a0a0; border-bottom: none; }"
-//        "QTabBar::tab:!selected { background-color: #f0f0f0; }"
-//        "QTabWidget::pane { border: 1px solid #c0c0c0; }"
-//        "QHeaderView::section { padding-top: 6px; padding-bottom: 6px; }"
-//        "QLineEdit { qproperty-alignment: AlignCenter; }"
-//        "QComboBox { qproperty-alignment: AlignCenter; }"
-//        "QSpinBox { qproperty-alignment: AlignCenter; }"
-//        "QDateEdit { qproperty-alignment: AlignCenter; }"
-//    );
-/*
-    // 전체 앱 배경
-    a.setStyleSheet(
-        "QMainWindow { background-color: #FBFAF5; }"
-        "QWidget { background-color: #FBFAF5; }"
-    );
-
-    w.findChild<QTabWidget*>()->setStyleSheet(
-        "QTabBar::tab { min-width: 333px; min-height: 50px; padding: 6px; "
-        "font-family: 'Noto Sans KR'; font-size: 10pt; "
-        "border: 1px solid #E8E9E4; border-bottom: none; }"
-        "QTabBar::tab:selected { font-weight: 610; background-color: #E4D6E5; "
-        "border: 1px solid #E4D6E5; border-bottom: none; }"
-        "QTabBar::tab:!selected { background-color: #F9EDED; }"
-        "QTabWidget::pane { border: 1px solid #E8E9E4; background-color: #FBFAF5; }"
-        "QHeaderView::section { padding-top: 6px; padding-bottom: 6px; background-color: #E8E9E4; }"
-        "QLineEdit { qproperty-alignment: AlignCenter; }"
-        "QComboBox { qproperty-alignment: AlignCenter; }"
-        "QSpinBox { qproperty-alignment: AlignCenter; }"
-        "QDateEdit { qproperty-alignment: AlignCenter; }"
-    );
-*/
 
     // 프로그램 시작시 출석 페이지로 로드
     w.findChild<QTabWidget*>()->setCurrentIndex(0);

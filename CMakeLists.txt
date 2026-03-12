@@ -19,9 +19,13 @@ include_directories(/usr/include/x86_64-linux-gnu/qt6/QtCharts)
 
 set(PROJECT_SOURCES
         main.cpp
+        config.h
         mainwindow.cpp
         mainwindow.h
         mainwindow.ui
+        logindialog.h
+        logindialog.cpp
+        logindialog.ui
         attendanceoverview.cpp
         attendanceoverview.h
         attendanceoverview.ui

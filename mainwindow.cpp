@@ -207,9 +207,14 @@ MainWindow::MainWindow(QWidget *parent)
     });
 }
 
-MainWindow::~MainWindow()
+QString MainWindow::getCode(const QString &name)
 {
-    delete ui;
+    QSqlQuery q(db);
+    q.prepare("SELECT value FROM codes WHERE name = ?");
+    q.addBindValue(name);
+    q.exec();
+    if (q.next()) return q.value(0).toString();
+    return "";
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
@@ -237,6 +242,11 @@ void MainWindow::resizeEvent(QResizeEvent *event)
     for (int i = 2; i < ui->tableAt->columnCount(); i++) {
         ui->tableAt->setColumnWidth(i, dateColWidth);
     }
+}
+
+MainWindow::~MainWindow()
+{
+    delete ui;
 }
 
 // ---------------------------------------------- init --------------------------------------------------------
@@ -449,6 +459,13 @@ void MainWindow::initDatabase()
             description TEXT,
             timestamp TEXT,
             FOREIGN KEY (userId) REFERENCES users(id)
+        )
+    )");
+
+    query.exec(R"(
+        CREATE TABLE IF NOT EXISTS codes (
+            name TEXT PRIMARY KEY,
+            value TEXT NOT NULL
         )
     )");
 
