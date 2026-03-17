@@ -27,9 +27,9 @@ int main(int argc, char *argv[])
     font.setBold(false);
     a.setFont(font);
 
-    int id = QFontDatabase::addApplicationFont(":/fonts/Danjo-bold-Regular.otf");
-    qDebug() << "NEXON id:" << id;
-    qDebug() << "NEXON families:" << QFontDatabase::applicationFontFamilies(id);
+//    int id = QFontDatabase::addApplicationFont(":/fonts/Danjo-bold-Regular.otf");
+//    qDebug() << "NEXON id:" << id;
+//    qDebug() << "NEXON families:" << QFontDatabase::applicationFontFamilies(id);
 
     // ===== DB =====
     QDir().mkpath(BASE_PATH);
