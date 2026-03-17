@@ -396,11 +396,9 @@ void MainWindow::initDatabase()
     db.setDatabaseName(BASE_PATH + "/imcyouth.db");
 
     if (!db.open()) {
-        qDebug() << "DB 연결 실패:" << db.lastError().text();
+        QMessageBox::critical(this, "오류", "DB 연결에 실패했습니다.\n" + db.lastError().text());
         return;
     }
-
-    qDebug() << "DB 연결 성공! 경로:" << BASE_PATH + "/imcyouth.db";
 
     QSqlQuery query;
 
@@ -446,7 +444,7 @@ void MainWindow::initDatabase()
             description TEXT,
             amount INTEGER,
             type TEXT,
-            isBlack INTEGER DEFAULT 0,  -- 0: 일반회계, 1: 브레이크머니
+            isBlack INTEGER DEFAULT 0,  -- 0: 일반회계, 1: 블랙
             receiptImage TEXT
         )
     )");
@@ -468,8 +466,6 @@ void MainWindow::initDatabase()
             value TEXT NOT NULL
         )
     )");
-
-    qDebug() << "모든 테이블 생성 완료!";
 }
 
 // ---------------------------------------------- Attendance --------------------------------------------------------
@@ -610,8 +606,6 @@ void MainWindow::loadAttendance()
 
 void MainWindow::saveAttendance()
 {
-    qDebug() << "저장 시작, 행 수:" << ui->tableAt->rowCount() << "컬럼 수:" << currentColumns.size();
-
     for (int row = 0; row < ui->tableAt->rowCount(); row++) {
         int memberId = ui->tableAt->item(row, 1)->data(Qt::UserRole).toInt();
 
@@ -640,7 +634,6 @@ void MainWindow::saveAttendance()
                 updateQuery.addBindValue(dateStr);
                 updateQuery.addBindValue(service);
                 updateQuery.exec();
-                qDebug() << "UPDATE 결과:" << updateQuery.lastError().text();
             } else {
                 QSqlQuery insertQuery(db);
                 insertQuery.prepare("INSERT INTO attendance (memberId, date, service, isPresent) VALUES (?, ?, ?, ?)");
@@ -649,7 +642,6 @@ void MainWindow::saveAttendance()
                 insertQuery.addBindValue(service);
                 insertQuery.addBindValue(isPresent ? 1 : 0);
                 insertQuery.exec();
-                qDebug() << "INSERT 결과:" << insertQuery.lastError().text();
             }
         }
     }
