@@ -19,6 +19,14 @@
 #include <QDir>
 #include <QCoreApplication>
 
+#include <QListWidget>
+#include <QStackedWidget>
+#include <QFormLayout>
+#include <QTableWidget>
+#include <QSqlQuery>
+#include <QSqlError>
+#include <QMessageBox>
+
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -94,6 +102,18 @@ private:
     void deleteMember();
     void saveMember();
     void searchMemberByName();
+
+    void initSettingsTab();         // 설정 페이지
+    void loadAuditLog();
+    void changeAppPassword();
+
+//    QListWidget    *settingsMenu;
+//    QStackedWidget *settingsStack;
+//    QTableWidget   *auditLogTable;
+//    QLineEdit      *leCurrentPw;
+//    QLineEdit      *leNewPw;
+//    QLineEdit      *leConfirmPw;
+
 };
 
 #endif // MAINWINDOW_H

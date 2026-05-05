@@ -11,390 +11,245 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>IMCYouth Management System</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout">
     <item>
      <widget class="QTabWidget" name="tabWidget">
-      <property name="minimumSize">
-       <size>
-        <width>0</width>
-        <height>0</height>
-       </size>
-      </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>3</number>
       </property>
-      <property name="iconSize">
-       <size>
-        <width>16</width>
-        <height>16</height>
-       </size>
-      </property>
+
       <widget class="QWidget" name="tab_1">
-       <property name="minimumSize">
-        <size>
-         <width>0</width>
-         <height>0</height>
-        </size>
-       </property>
        <attribute name="title">
         <string>출석 Attendance</string>
        </attribute>
        <widget class="QTableWidget" name="tableAt">
         <property name="geometry">
-         <rect>
-          <x>20</x>
-          <y>70</y>
-          <width>1441</width>
-          <height>521</height>
-         </rect>
+         <rect><x>20</x><y>70</y><width>1441</width><height>521</height></rect>
         </property>
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="minimumSize">
-         <size>
-          <width>0</width>
-          <height>0</height>
-         </size>
-        </property>
-        <column>
-         <property name="text">
-          <string>name</string>
-         </property>
-        </column>
-        <column>
-         <property name="text">
-          <string>isPresent</string>
-         </property>
-        </column>
+        <column><property name="text"><string>name</string></property></column>
+        <column><property name="text"><string>isPresent</string></property></column>
        </widget>
        <widget class="QWidget" name="horizontalLayoutWidget">
         <property name="geometry">
-         <rect>
-          <x>20</x>
-          <y>10</y>
-          <width>1441</width>
-          <height>51</height>
-         </rect>
+         <rect><x>20</x><y>10</y><width>1441</width><height>51</height></rect>
         </property>
         <layout class="QHBoxLayout" name="horizontalLayout">
-         <item>
-          <widget class="QSpinBox" name="spinYearAt"/>
-         </item>
-         <item>
-          <widget class="QComboBox" name="comboMonthAt"/>
-         </item>
-         <item>
-          <widget class="QPushButton" name="btnSearchAt">
-           <property name="text">
-            <string>조회</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="btnSaveAt">
-           <property name="text">
-            <string>저장</string>
-           </property>
-          </widget>
-         </item>
+         <item><widget class="QSpinBox" name="spinYearAt"/></item>
+         <item><widget class="QComboBox" name="comboMonthAt"/></item>
+         <item><widget class="QPushButton" name="btnSearchAt"><property name="text"><string>조회</string></property></widget></item>
+         <item><widget class="QPushButton" name="btnSaveAt"><property name="text"><string>저장</string></property></widget></item>
         </layout>
        </widget>
        <widget class="QWidget" name="horizontalLayoutWidget_2">
         <property name="geometry">
-         <rect>
-          <x>20</x>
-          <y>610</y>
-          <width>1441</width>
-          <height>281</height>
-         </rect>
+         <rect><x>20</x><y>610</y><width>1441</width><height>281</height></rect>
         </property>
         <layout class="QHBoxLayout" name="horizontalLayout_2">
-         <item>
-          <widget class="QWidget" name="chartSatAt" native="true"/>
-         </item>
-         <item>
-          <widget class="QWidget" name="chartSun1At" native="true"/>
-         </item>
-         <item>
-          <widget class="QWidget" name="chartSun2At" native="true"/>
-         </item>
-         <item>
-          <widget class="QWidget" name="chartBarAt" native="true"/>
-         </item>
+         <item><widget class="QWidget" name="chartSatAt" native="true"/></item>
+         <item><widget class="QWidget" name="chartSun1At" native="true"/></item>
+         <item><widget class="QWidget" name="chartSun2At" native="true"/></item>
+         <item><widget class="QWidget" name="chartBarAt" native="true"/></item>
         </layout>
        </widget>
        <widget class="QPushButton" name="btnOverviewAt">
         <property name="geometry">
-         <rect>
-          <x>510</x>
-          <y>-20</y>
-          <width>283</width>
-          <height>31</height>
-         </rect>
+         <rect><x>510</x><y>-20</y><width>283</width><height>31</height></rect>
         </property>
-        <property name="text">
-         <string>전체 현황</string>
-        </property>
+        <property name="text"><string>전체 현황</string></property>
        </widget>
       </widget>
+
       <widget class="QWidget" name="tab_2">
-       <property name="toolTipDuration">
-        <number>-5</number>
-       </property>
        <attribute name="title">
         <string>회계 Accounting</string>
        </attribute>
        <widget class="QWidget" name="horizontalLayoutWidget_3">
         <property name="geometry">
-         <rect>
-          <x>20</x>
-          <y>10</y>
-          <width>1441</width>
-          <height>51</height>
-         </rect>
+         <rect><x>20</x><y>10</y><width>1441</width><height>51</height></rect>
         </property>
         <layout class="QHBoxLayout" name="horizontalLayout_3">
-         <item>
-          <widget class="QDateEdit" name="dateAc"/>
-         </item>
-         <item>
-          <widget class="QPushButton" name="btnSearchAc">
-           <property name="text">
-            <string>조회</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="btnEditAc">
-           <property name="text">
-            <string>수정</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="btnDeleteAc">
-           <property name="text">
-            <string>삭제</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="btnSaveAc">
-           <property name="text">
-            <string>저장</string>
-           </property>
-          </widget>
-         </item>
+         <item><widget class="QDateEdit" name="dateAc"/></item>
+         <item><widget class="QPushButton" name="btnSearchAc"><property name="text"><string>조회</string></property></widget></item>
+         <item><widget class="QPushButton" name="btnEditAc"><property name="text"><string>수정</string></property></widget></item>
+         <item><widget class="QPushButton" name="btnDeleteAc"><property name="text"><string>삭제</string></property></widget></item>
+         <item><widget class="QPushButton" name="btnSaveAc"><property name="text"><string>저장</string></property></widget></item>
          <item>
           <widget class="QPushButton" name="btnAddAc">
-           <property name="maximumSize">
-            <size>
-             <width>120</width>
-             <height>16777215</height>
-            </size>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">QPushButton {
-    background: transparent;
-    border: none;
-    font-size: 11pt;
-}
-QPushButton:hover {
-    color: gray;
-}</string>
-           </property>
-           <property name="text">
-            <string>추가</string>
-           </property>
+           <property name="maximumSize"><size><width>120</width><height>16777215</height></size></property>
+           <property name="styleSheet"><string>QPushButton { background: transparent; border: none; font-size: 11pt; } QPushButton:hover { color: gray; }</string></property>
+           <property name="text"><string>추가</string></property>
           </widget>
          </item>
         </layout>
        </widget>
        <widget class="QWidget" name="horizontalLayoutWidget_4">
         <property name="geometry">
-         <rect>
-          <x>20</x>
-          <y>70</y>
-          <width>911</width>
-          <height>821</height>
-         </rect>
+         <rect><x>20</x><y>70</y><width>911</width><height>821</height></rect>
         </property>
-        <layout class="QHBoxLayout" name="horizontalLayout_4">
-         <item>
-          <widget class="QTableWidget" name="tableAc"/>
-         </item>
-        </layout>
+        <layout class="QHBoxLayout" name="horizontalLayout_4"><item><widget class="QTableWidget" name="tableAc"/></item></layout>
        </widget>
        <widget class="QWidget" name="verticalLayoutWidget">
         <property name="geometry">
-         <rect>
-          <x>940</x>
-          <y>70</y>
-          <width>521</width>
-          <height>821</height>
-         </rect>
+         <rect><x>940</x><y>70</y><width>521</width><height>821</height></rect>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_2">
-         <item>
-          <widget class="QWidget" name="chartPieAc" native="true"/>
-         </item>
-         <item>
-          <widget class="QWidget" name="chartBarAc" native="true"/>
-         </item>
+         <item><widget class="QWidget" name="chartPieAc" native="true"/></item>
+         <item><widget class="QWidget" name="chartBarAc" native="true"/></item>
         </layout>
        </widget>
       </widget>
+
       <widget class="QWidget" name="tab_3">
        <attribute name="title">
         <string>명단 Members</string>
        </attribute>
        <widget class="QWidget" name="verticalLayoutWidget_2">
         <property name="geometry">
-         <rect>
-          <x>20</x>
-          <y>70</y>
-          <width>1441</width>
-          <height>821</height>
-         </rect>
+         <rect><x>20</x><y>70</y><width>1441</width><height>821</height></rect>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_3">
-         <item>
-          <widget class="QTableWidget" name="tableMembers"/>
-         </item>
-         <item>
-          <widget class="QLabel" name="labelInactive">
-           <property name="text">
-            <string>TextLabel</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QTableWidget" name="tableMembersInactive"/>
-         </item>
+         <item><widget class="QTableWidget" name="tableMembers"/></item>
+         <item><widget class="QLabel" name="labelInactive"><property name="text"><string>비활동 명단</string></property></widget></item>
+         <item><widget class="QTableWidget" name="tableMembersInactive"/></item>
         </layout>
        </widget>
        <widget class="QWidget" name="horizontalLayoutWidget_5">
         <property name="geometry">
-         <rect>
-          <x>20</x>
-          <y>10</y>
-          <width>1439</width>
-          <height>51</height>
-         </rect>
+         <rect><x>20</x><y>10</y><width>1439</width><height>51</height></rect>
         </property>
         <layout class="QHBoxLayout" name="horizontalLayout_5">
-         <item>
-          <widget class="QLineEdit" name="searchMember">
-           <property name="maximumSize">
-            <size>
-             <width>300</width>
-             <height>16777215</height>
-            </size>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="btnSearchMember">
-           <property name="enabled">
-            <bool>true</bool>
-           </property>
-           <property name="minimumSize">
-            <size>
-             <width>200</width>
-             <height>0</height>
-            </size>
-           </property>
-           <property name="text">
-            <string>조회</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="btnEditMember">
-           <property name="text">
-            <string>수정</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="btnDeleteMember">
-           <property name="minimumSize">
-            <size>
-             <width>200</width>
-             <height>0</height>
-            </size>
-           </property>
-           <property name="text">
-            <string>삭제</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="btnSaveMember">
-           <property name="minimumSize">
-            <size>
-             <width>200</width>
-             <height>0</height>
-            </size>
-           </property>
-           <property name="text">
-            <string>저장</string>
-           </property>
-          </widget>
-         </item>
+         <item><widget class="QLineEdit" name="searchMember"><property name="maximumSize"><size><width>300</width><height>16777215</height></size></property></widget></item>
+         <item><widget class="QPushButton" name="btnSearchMember"><property name="minimumSize"><size><width>200</width><height>0</height></size></property><property name="text"><string>조회</string></property></widget></item>
+         <item><widget class="QPushButton" name="btnEditMember"><property name="text"><string>수정</string></property></widget></item>
+         <item><widget class="QPushButton" name="btnDeleteMember"><property name="minimumSize"><size><width>200</width><height>0</height></size></property><property name="text"><string>삭제</string></property></widget></item>
+         <item><widget class="QPushButton" name="btnSaveMember"><property name="minimumSize"><size><width>200</width><height>0</height></size></property><property name="text"><string>저장</string></property></widget></item>
          <item>
           <widget class="QPushButton" name="btnAddMember">
-           <property name="minimumSize">
-            <size>
-             <width>200</width>
-             <height>0</height>
-            </size>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>30</width>
-             <height>16777215</height>
-            </size>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">QPushButton {
-    background: transparent;
-    border: none;
-    font-size: 11pt;
-}
-QPushButton:hover {
-    color: gray;
-}</string>
-           </property>
-           <property name="text">
-            <string>추가</string>
-           </property>
+           <property name="minimumSize"><size><width>200</width><height>0</height></size></property>
+           <property name="styleSheet"><string>QPushButton { background: transparent; border: none; font-size: 11pt; } QPushButton:hover { color: gray; }</string></property>
+           <property name="text"><string>추가</string></property>
           </widget>
          </item>
         </layout>
        </widget>
       </widget>
+
+      <widget class="QWidget" name="tab_4">
+       <attribute name="title">
+        <string>설정 Settings</string>
+       </attribute>
+       <layout class="QHBoxLayout" name="horizontalLayout_settings">
+        <property name="spacing"><number>0</number></property>
+        <property name="leftMargin"><number>0</number></property>
+        <property name="topMargin"><number>0</number></property>
+        <property name="rightMargin"><number>0</number></property>
+        <property name="bottomMargin"><number>0</number></property>
+        <item>
+         <widget class="QListWidget" name="settingsMenu">
+          <property name="maximumSize"><size><width>250</width><height>16777215</height></size></property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QStackedWidget" name="stackedWidget">
+          <property name="currentIndex"><number>0</number></property>
+
+          <widget class="QWidget" name="pageLog">
+           <layout class="QVBoxLayout" name="verticalLayout_log">
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_logTop">
+              <item><widget class="QLabel" name="labelLog"><property name="text"><string>System Logs</string></property><property name="styleSheet"><string>font-size: 14pt; font-weight: bold;</string></property></widget></item>
+              <item><spacer name="spacerLog"><property name="orientation"><enum>Qt::Horizontal</enum></property></spacer></item>
+              <item><widget class="QPushButton" name="btnRefreshLog"><property name="text"><string>새로고침</string></property></widget></item>
+             </layout>
+            </item>
+            <item>
+             <widget class="QTableWidget" name="tableAuditLog">
+              <column><property name="text"><string>ID</string></property></column>
+              <column><property name="text"><string>사용자</string></property></column>
+              <column><property name="text"><string>액션</string></property></column>
+              <column><property name="text"><string>설명</string></property></column>
+              <column><property name="text"><string>시각</string></property></column>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+
+          <widget class="QWidget" name="pagePw">
+           <layout class="QVBoxLayout" name="verticalLayout_pw">
+            <item>
+             <spacer name="spacerPwTop">
+              <property name="orientation"><enum>Qt::Vertical</enum></property>
+              <property name="sizeHint" stdset="0"><size><width>20</width><height>40</height></size></property>
+             </spacer>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_pwCenter">
+              <item>
+               <spacer name="spacerPwLeft">
+                <property name="orientation"><enum>Qt::Horizontal</enum></property>
+               </spacer>
+              </item>
+              <item>
+               <layout class="QVBoxLayout" name="verticalLayout_pwCard">
+                <item>
+                 <widget class="QLabel" name="labelPwSub">
+                  <property name="text"><string>Settings</string></property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLabel" name="labelPw">
+                  <property name="text"><string>Change Password</string></property>
+                 </widget>
+                </item>
+                <item>
+                 <layout class="QFormLayout" name="formLayout_pw">
+                  <property name="topMargin"><number>20</number></property>
+                  <property name="verticalSpacing"><number>15</number></property>
+                  <item row="0" column="0"><widget class="QLabel" name="l1"><property name="text"><string>현재 암호</string></property></widget></item>
+                  <item row="0" column="1"><widget class="QLineEdit" name="leCurrentPw"><property name="echoMode"><enum>QLineEdit::Password</enum></property><property name="minimumSize"><size><width>750</width><height>0</height></size></property></widget></item>
+                  <item row="1" column="0"><widget class="QLabel" name="l2"><property name="text"><string>새 암호</string></property></widget></item>
+                  <item row="1" column="1"><widget class="QLineEdit" name="leNewPw"><property name="echoMode"><enum>QLineEdit::Password</enum></property><property name="minimumSize"><size><width>750</width><height>0</height></size></property></widget></item>
+                  <item row="2" column="0"><widget class="QLabel" name="l3"><property name="text"><string>암호 확인</string></property></widget></item>
+                  <item row="2" column="1"><widget class="QLineEdit" name="leConfirmPw"><property name="echoMode"><enum>QLineEdit::Password</enum></property><property name="minimumSize"><size><width>750</width><height>0</height></size></property></widget></item>
+                 </layout>
+                </item>
+                <item>
+                 <layout class="QHBoxLayout" name="h1">
+                  <item><spacer name="s1"><property name="orientation"><enum>Qt::Horizontal</enum></property></spacer></item>
+                  <item><widget class="QPushButton" name="btnChangePw"><property name="text"><string>암호 변경</string></property><property name="minimumSize"><size><width>120</width><height>40</height></size></property></widget></item>
+                 </layout>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <spacer name="spacerPwRight">
+                <property name="orientation"><enum>Qt::Horizontal</enum></property>
+               </spacer>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <spacer name="spacerPwBottom">
+              <property name="orientation"><enum>Qt::Vertical</enum></property>
+              <property name="sizeHint" stdset="0"><size><width>20</width><height>40</height></size></property>
+             </spacer>
+            </item>
+           </layout>
+          </widget>
+
+         </widget>
+        </item>
+       </layout>
+      </widget>
+
      </widget>
     </item>
    </layout>
   </widget>
-  <widget class="QMenuBar" name="menubar">
-   <property name="geometry">
-    <rect>
-     <x>0</x>
-     <y>0</y>
-     <width>1500</width>
-     <height>22</height>
-    </rect>
-   </property>
-  </widget>
+  <widget class="QMenuBar" name="menubar"/>
   <widget class="QStatusBar" name="statusbar"/>
  </widget>
  <resources/>

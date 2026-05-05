@@ -36,6 +36,8 @@
 #include <QInputDialog>
 #include <QDateTime>
 
+
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
@@ -205,6 +207,8 @@ MainWindow::MainWindow(QWidget *parent)
             QString("background-color: %1;").arg(CHART_PastelYellow[2].name())
         );
     });
+
+    initSettingsTab();
 }
 
 QString MainWindow::getCode(const QString &name)
@@ -1764,6 +1768,177 @@ void MainWindow::saveMember()
     ui->btnEditMember->setStyleSheet("");
 
     loadMembers();
+}
+
+// ---------------------------------------------- Settings --------------------------------------------------------
+void MainWindow::initSettingsTab() {
+    // 아이템 추가
+    ui->settingsMenu->addItem("시스템 로그");
+    ui->settingsMenu->addItem("암호 설정");
+
+    // 사이드바 스타일
+    ui->settingsMenu->setStyleSheet(
+        "QListWidget {"
+        "  background-color: #f7f3e8;"
+        "  border: none;"
+        "  border-right: 2px solid #d1d066;"
+        "  outline: none;"
+        "  padding: 8px 6px;"
+        "}"
+        "QListWidget::item {"
+        "  height: 60px;"
+        "  border-radius: 15px;"
+        "  padding-left: 16px;"
+        "  margin: 4px 6px;"
+        "  color: #333333;"
+        "}"
+        "QListWidget::item:hover {"
+        "  background-color: #d1d066;"
+        "  color: white;"
+        "}"
+        "QListWidget::item:selected {"
+        "  background-color: #f7f3e8;"
+        "  color: #333333;"
+        "  border: 2px solid #d1d066;"
+        "}"
+
+        "QLineEdit {"
+        "  height: 42px;"
+        "  border: 1.5px solid #e0d8c0;"
+        "  border-radius: 10px;"
+        "  background: #faf8f2;"
+        "  padding: 0 14px;"
+        "}"
+        "QLineEdit:focus {"
+        "  border-color: #d1d066;"
+        "  background: white;"
+        "}"
+        "QPushButton#btnChangePw {"
+        "  background: #d1d066;"
+        "  color: white;"
+        "  border: none;"
+        "  border-radius: 10px;"
+        "  font-size: 13px;"
+        "}"
+        "QPushButton#btnChangePw:hover { background: #b8b84f; }"
+    );
+
+    ui->labelPwSub->setStyleSheet(
+        "font-size: 11px; font-weight: 600; letter-spacing: 2px; color: #b8b84f;"
+    );
+    ui->labelPw->setStyleSheet(
+        "font-size: 18px; font-weight: 600; color: #222;"
+        "padding-bottom: 16px; border-bottom: 1.5px solid #f0ead8;"
+    );
+
+    // tableAuditLog 기본 설정
+    ui->tableAuditLog->horizontalHeader()->setDefaultAlignment(Qt::AlignCenter);
+    ui->tableAuditLog->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    ui->tableAuditLog->setSelectionBehavior(QAbstractItemView::SelectRows);
+    ui->tableAuditLog->setAlternatingRowColors(true);
+    ui->tableAuditLog->verticalHeader()->setVisible(false);
+    ui->tableAuditLog->horizontalHeader()->setSectionResizeMode(QHeaderView::Fixed);
+
+    // 컬럼 비율: ID 10%, 나머지 4개 균등
+    auto resizeAuditCols = [this]() {
+        int total = ui->tableAuditLog->viewport()->width();
+        int idWidth = total * 0.10;
+        int rest = (total - idWidth) / 4;
+        ui->tableAuditLog->setColumnWidth(0, idWidth);
+        ui->tableAuditLog->setColumnWidth(1, rest);
+        ui->tableAuditLog->setColumnWidth(2, rest);
+        ui->tableAuditLog->setColumnWidth(3, rest);
+        ui->tableAuditLog->setColumnWidth(4, rest);
+    };
+
+    connect(ui->tableAuditLog->horizontalHeader(), &QHeaderView::geometriesChanged,
+            this, resizeAuditCols);
+    resizeAuditCols();
+
+    // 시그널 연결
+    connect(ui->settingsMenu, &QListWidget::currentRowChanged,
+            ui->stackedWidget, &QStackedWidget::setCurrentIndex);
+    connect(ui->btnRefreshLog, &QPushButton::clicked,
+            this, &MainWindow::loadAuditLog);
+    connect(ui->btnChangePw, &QPushButton::clicked,
+            this, &MainWindow::changeAppPassword);
+
+    // 초기 선택
+    ui->settingsMenu->setCurrentRow(0);
+    loadAuditLog();
+}
+
+void MainWindow::loadAuditLog() {
+    QSqlQuery query(db);
+    query.prepare(
+        "SELECT al.id, u.username, al.action, al.description, al.timestamp "
+        "FROM audit_log al "
+        "LEFT JOIN users u ON al.userId = u.id "
+        "ORDER BY al.timestamp DESC"
+    );
+
+    if (!query.exec()) {
+        qDebug() << "loadAuditLog error:" << query.lastError().text();
+        return;
+    }
+
+    ui->tableAuditLog->setRowCount(0);
+    while (query.next()) {
+        int row = ui->tableAuditLog->rowCount();
+        ui->tableAuditLog->insertRow(row);
+        for (int col = 0; col < 5; col++) {
+            QTableWidgetItem *item = new QTableWidgetItem(query.value(col).toString());
+            item->setTextAlignment(Qt::AlignCenter);
+            ui->tableAuditLog->setItem(row, col, item);
+        }
+    }
+}
+
+void MainWindow::changeAppPassword() {
+    QString currentPw = ui->leCurrentPw->text().trimmed();
+    QString newPw     = ui->leNewPw->text().trimmed();
+    QString confirmPw = ui->leConfirmPw->text().trimmed();
+
+    // 현재 암호 DB 확인
+    QSqlQuery checkQuery(db);
+    checkQuery.prepare("SELECT value FROM codes WHERE name = 'app_password'");
+    if (!checkQuery.exec() || !checkQuery.next()) {
+        QMessageBox::warning(this, "오류", "현재 암호를 확인할 수 없습니다.");
+        return;
+    }
+    if (checkQuery.value(0).toString() != currentPw) {
+        QMessageBox::warning(this, "암호 불일치", "현재 암호가 올바르지 않습니다.");
+        ui->leCurrentPw->clear();
+        ui->leCurrentPw->setFocus();
+        return;
+    }
+
+    // 새 암호 유효성
+    if (newPw.isEmpty()) {
+        QMessageBox::warning(this, "입력 오류", "새 암호를 입력하세요.");
+        return;
+    }
+    if (newPw != confirmPw) {
+        QMessageBox::warning(this, "암호 불일치", "새 암호와 확인 암호가 일치하지 않습니다.");
+        ui->leNewPw->clear();
+        ui->leConfirmPw->clear();
+        ui->leNewPw->setFocus();
+        return;
+    }
+
+    // DB 업데이트
+    QSqlQuery updateQuery(db);
+    updateQuery.prepare("UPDATE codes SET value = :pw WHERE name = 'app_password'");
+    updateQuery.bindValue(":pw", newPw);
+    if (!updateQuery.exec()) {
+        QMessageBox::critical(this, "오류", "암호 변경 실패:\n" + updateQuery.lastError().text());
+        return;
+    }
+
+    ui->leCurrentPw->clear();
+    ui->leNewPw->clear();
+    ui->leConfirmPw->clear();
+    QMessageBox::information(this, "완료", "암호가 변경되었습니다.");
 }
 
 // ---------------------------------------------- Event --------------------------------------------------------
