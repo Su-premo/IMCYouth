@@ -9,3 +9,15 @@ receipts/
 # 빌드 파일
 build/
 *.user
+
+# Qt Creator templates
+*.user
+*.user.*
+
+# CMake/qmake build directories
+build*/
+*.pro.user
+
+# Compiled object files
+*.o
+*.obj

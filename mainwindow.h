@@ -59,6 +59,7 @@ private:
     QString getCode(const QString &name);
 
     bool isBreakMode = false;
+    bool m_settingsChangingRow = false;
 
     // ===== 차트 색상 팔레트 (변경 시 여기만 수정) =====
     const QList<QColor> CHART_PastelBlue = {
@@ -105,14 +106,7 @@ private:
 
     void initSettingsTab();         // 설정 페이지
     void loadAuditLog();
-    void changeAppPassword();
-
-//    QListWidget    *settingsMenu;
-//    QStackedWidget *settingsStack;
-//    QTableWidget   *auditLogTable;
-//    QLineEdit      *leCurrentPw;
-//    QLineEdit      *leNewPw;
-//    QLineEdit      *leConfirmPw;
+    // void changeAppPassword();
 
 };
 

@@ -158,9 +158,26 @@
 
           <widget class="QWidget" name="pageLog">
            <layout class="QVBoxLayout" name="verticalLayout_log">
+            <property name="leftMargin"><number>50</number></property>
+            <property name="topMargin"><number>45</number></property>
+            <property name="rightMargin"><number>50</number></property>
+            <property name="bottomMargin"><number>45</number></property>
             <item>
              <layout class="QHBoxLayout" name="horizontalLayout_logTop">
-              <item><widget class="QLabel" name="labelLog"><property name="text"><string>System Logs</string></property><property name="styleSheet"><string>font-size: 14pt; font-weight: bold;</string></property></widget></item>
+              <item>
+               <layout class="QVBoxLayout" name="verticalLayout_logTitle">
+                <item>
+                 <widget class="QLabel" name="labelLogSub">
+                  <property name="text"><string>Settings</string></property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLabel" name="labelLog">
+                  <property name="text"><string>System Logs</string></property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
               <item><spacer name="spacerLog"><property name="orientation"><enum>Qt::Horizontal</enum></property></spacer></item>
               <item><widget class="QPushButton" name="btnRefreshLog"><property name="text"><string>새로고침</string></property></widget></item>
              </layout>
@@ -178,6 +195,8 @@
           </widget>
 
           <widget class="QWidget" name="pagePw">
+          </widget>
+          <!--<widget class="QWidget" name="pagePw">
            <layout class="QVBoxLayout" name="verticalLayout_pw">
             <item>
              <spacer name="spacerPwTop">
@@ -205,21 +224,19 @@
                  </widget>
                 </item>
                 <item>
-                 <layout class="QFormLayout" name="formLayout_pw">
-                  <property name="topMargin"><number>20</number></property>
-                  <property name="verticalSpacing"><number>15</number></property>
-                  <item row="0" column="0"><widget class="QLabel" name="l1"><property name="text"><string>현재 암호</string></property></widget></item>
-                  <item row="0" column="1"><widget class="QLineEdit" name="leCurrentPw"><property name="echoMode"><enum>QLineEdit::Password</enum></property><property name="minimumSize"><size><width>750</width><height>0</height></size></property></widget></item>
-                  <item row="1" column="0"><widget class="QLabel" name="l2"><property name="text"><string>새 암호</string></property></widget></item>
-                  <item row="1" column="1"><widget class="QLineEdit" name="leNewPw"><property name="echoMode"><enum>QLineEdit::Password</enum></property><property name="minimumSize"><size><width>750</width><height>0</height></size></property></widget></item>
-                  <item row="2" column="0"><widget class="QLabel" name="l3"><property name="text"><string>암호 확인</string></property></widget></item>
-                  <item row="2" column="1"><widget class="QLineEdit" name="leConfirmPw"><property name="echoMode"><enum>QLineEdit::Password</enum></property><property name="minimumSize"><size><width>750</width><height>0</height></size></property></widget></item>
-                 </layout>
+                 <widget class="QLabel" name="labelPwDesc">
+                  <property name="text"><string>암호를 변경하려면 아래 버튼을 클릭하세요.</string></property>
+                 </widget>
                 </item>
                 <item>
                  <layout class="QHBoxLayout" name="h1">
                   <item><spacer name="s1"><property name="orientation"><enum>Qt::Horizontal</enum></property></spacer></item>
-                  <item><widget class="QPushButton" name="btnChangePw"><property name="text"><string>암호 변경</string></property><property name="minimumSize"><size><width>120</width><height>40</height></size></property></widget></item>
+                  <item>
+                   <widget class="QPushButton" name="btnChangePw">
+                    <property name="text"><string>암호 변경</string></property>
+                    <property name="minimumSize"><size><width>120</width><height>40</height></size></property>
+                   </widget>
+                  </item>
                  </layout>
                 </item>
                </layout>
@@ -238,7 +255,7 @@
              </spacer>
             </item>
            </layout>
-          </widget>
+          </widget>-->
 
          </widget>
         </item>

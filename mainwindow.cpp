@@ -1,5 +1,6 @@
 #include "mainwindow.h"
 #include "./ui_mainwindow.h"
+#include "changepassworddialog.h"
 #include <QSqlQuery>
 #include <QSqlError>
 #include <QDebug>
@@ -393,18 +394,18 @@ void MainWindow::initMembersTab()
 void MainWindow::initDatabase()
 {
     // 폴더 생성
-    QDir().mkpath(BASE_PATH);
-    QDir().mkpath(BASE_PATH + "/receipts");
+    QDir().mkpath(BASE_PATH());
+    QDir().mkpath(BASE_PATH() + "/receipts");
 
     db = QSqlDatabase::addDatabase("QSQLITE");
-    db.setDatabaseName(BASE_PATH + "/imcyouth.db");
+    db.setDatabaseName(BASE_PATH() + "/imcyouth.db");
 
     if (!db.open()) {
         QMessageBox::critical(this, "오류", "DB 연결에 실패했습니다.\n" + db.lastError().text());
         return;
     }
 
-    QSqlQuery query;
+    QSqlQuery query(db);
 
     query.exec(R"(
         CREATE TABLE IF NOT EXISTS users (
@@ -469,6 +470,19 @@ void MainWindow::initDatabase()
             name TEXT PRIMARY KEY,
             value TEXT NOT NULL
         )
+    )");
+
+    // 기존 중복 제거 (가장 큰 id만 남기고 삭제)
+    query.exec(R"(
+    DELETE FROM attendance WHERE id NOT IN (
+        SELECT MAX(id) FROM attendance GROUP BY memberId, date, service
+    )
+    )");
+
+    // UNIQUE 인덱스 추가 (없으면 생성)
+    query.exec(R"(
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_attendance_unique
+    ON attendance (memberId, date, service)
     )");
 }
 
@@ -545,7 +559,7 @@ void MainWindow::loadAttendance()
     }
 
     // 멤버 불러오기
-    QSqlQuery memberQuery;
+    QSqlQuery memberQuery(db);
     memberQuery.exec("SELECT id, name FROM members ORDER BY id");
 
     int row = 0;
@@ -574,7 +588,7 @@ void MainWindow::loadAttendance()
             QDate date = columns[col].first;
             QString service = columns[col].second;
 
-            QSqlQuery attendQuery;
+            QSqlQuery attendQuery(db);
             attendQuery.prepare("SELECT isPresent FROM attendance WHERE memberId = :memberId AND date = :date AND service = :service");
             attendQuery.bindValue(":memberId", memberId);
             attendQuery.bindValue(":date", date.toString("yyyy-MM-dd"));
@@ -610,6 +624,8 @@ void MainWindow::loadAttendance()
 
 void MainWindow::saveAttendance()
 {
+    db.transaction();           // 트랜잭션 시작
+
     for (int row = 0; row < ui->tableAt->rowCount(); row++) {
         int memberId = ui->tableAt->item(row, 1)->data(Qt::UserRole).toInt();
 
@@ -622,78 +638,87 @@ void MainWindow::saveAttendance()
             QCheckBox *checkBox = checkWidget->findChild<QCheckBox*>();
             bool isPresent = checkBox->isChecked();
 
-            // 기존 레코드 확인
-            QSqlQuery checkQuery(db);
-            checkQuery.prepare("SELECT id FROM attendance WHERE memberId = ? AND date = ? AND service = ?");
-            checkQuery.addBindValue(memberId);
-            checkQuery.addBindValue(dateStr);
-            checkQuery.addBindValue(service);
-            checkQuery.exec();
-
-            if (checkQuery.next()) {
-                QSqlQuery updateQuery(db);
-                updateQuery.prepare("UPDATE attendance SET isPresent = ? WHERE memberId = ? AND date = ? AND service = ?");
-                updateQuery.addBindValue(isPresent ? 1 : 0);
-                updateQuery.addBindValue(memberId);
-                updateQuery.addBindValue(dateStr);
-                updateQuery.addBindValue(service);
-                updateQuery.exec();
-            } else {
-                QSqlQuery insertQuery(db);
-                insertQuery.prepare("INSERT INTO attendance (memberId, date, service, isPresent) VALUES (?, ?, ?, ?)");
-                insertQuery.addBindValue(memberId);
-                insertQuery.addBindValue(dateStr);
-                insertQuery.addBindValue(service);
-                insertQuery.addBindValue(isPresent ? 1 : 0);
-                insertQuery.exec();
-            }
+            QSqlQuery upsertQuery(db);
+            upsertQuery.prepare(
+                "INSERT OR REPLACE INTO attendance (memberId, date, service, isPresent) "
+                "VALUES (?, ?, ?, ?)"
+                );
+            upsertQuery.addBindValue(memberId);
+            upsertQuery.addBindValue(dateStr);
+            upsertQuery.addBindValue(service);
+            upsertQuery.addBindValue(isPresent ? 1 : 0);
+            upsertQuery.exec();
         }
     }
 
+    db.commit();                // 트랜잭션 완료
     QMessageBox::information(this, "저장 완료", "출석이 저장되었습니다!");
     updateCharts();
 }
 
 void MainWindow::updateCharts()
 {
+    QSqlQuery debugQ(db);
+    debugQ.exec("SELECT date, service, isPresent FROM attendance ORDER BY date");
+    while (debugQ.next()) {
+        qDebug() << debugQ.value(0).toString()
+        << debugQ.value(1).toString()
+        << debugQ.value(2).toInt();
+    }
+
     int year = ui->spinYearAt->value();
     int month = ui->comboMonthAt->currentData().toInt();
     int totalMembers = 0;
+
+    qDebug() << "updateCharts year=" << year << "month=" << month;
 
     QSqlQuery countQuery(db);
     countQuery.exec("SELECT COUNT(*) FROM members");
     if (countQuery.next()) totalMembers = countQuery.value(0).toInt();
     if (totalMembers == 0) return;
 
-    // 토요일 / 1st / 2nd 출석률 계산
+    // 토요일 / 1st / 2nd 출석률 계산 (C안: 저장된 기록이 있는 세션만 평균에 포함)
     auto calcRate = [&](QString service) -> QPair<int,int> {
         int totalPresent = 0;
-        int sessionCount = 0; // 해당 서비스가 몇 번 있었는지
+        int sessionCount = 0;
         int daysInMonth = QDate(year, month, 1).daysInMonth();
+
         for (int day = 1; day <= daysInMonth; day++) {
             QDate date(year, month, day);
             bool isSat = (date.dayOfWeek() == 6 && service == "");
             bool isSun = (date.dayOfWeek() == 7 && service != "");
             if (!isSat && !isSun) continue;
 
-            sessionCount++; // 해당 서비스 횟수 카운트
-
             QSqlQuery q(db);
-            q.prepare("SELECT SUM(isPresent) FROM attendance WHERE date = ? AND service = ?");
+            q.prepare("SELECT SUM(isPresent) FROM attendance "
+                      "WHERE date = ? AND service = ? AND isPresent = 1");
             q.addBindValue(date.toString("yyyy-MM-dd"));
             q.addBindValue(service);
             q.exec();
+
             if (q.next()) {
-                totalPresent += q.value(0).toInt();
+                int present = q.value(0).toInt();
+                if (present == 0) continue;   // 출석자 없는 주는 제외
+                sessionCount++;
+                totalPresent += present;
             }
         }
-        if (sessionCount == 0) return {0, totalMembers};
 
-        // 평균 출석자수 = 전체 출석합계 / 세션 횟수
+        qDebug() << "calcRate service=" << service
+                 << "sessionCount=" << sessionCount
+                 << "totalPresent=" << totalPresent;  // ← 이 줄 추가
+
+        if (sessionCount == 0 || totalMembers == 0)
+            return {0, totalMembers > 0 ? totalMembers : 1};
+
+        // ✅ 핵심 수정: 세션별 평균 출석자 수를 반올림하지 않고
+        //    "전체 출석 합계 / 세션 수" 를 present로, totalMembers를 absent 기준으로 사용
         int avgPresent = qRound((double)totalPresent / sessionCount);
-        int avgAbsent = totalMembers - avgPresent;
+        // totalMembers 기준으로 absent 계산 (avgPresent가 totalMembers 초과 방지)
+        avgPresent = qMin(avgPresent, totalMembers);
         return {avgPresent, totalMembers};
     };
+
 
     auto makeChart = [&](QWidget *container, QString title, QPair<int,int> data) {
         QPieSeries *series = new QPieSeries();
@@ -884,7 +909,7 @@ void MainWindow::loadAccount()
                 }
                 QString filePath = QFileDialog::getOpenFileName(this, "영수증 선택", "", "Images (*.png *.jpg *.jpeg)");
                 if (!filePath.isEmpty()) {
-                    QString destDir = BASE_PATH + "/receipts/";
+                    QString destDir = BASE_PATH() + "/receipts/";
                     QDir().mkpath(destDir);
 
 //                    QString fileName = QFileInfo(filePath).fileName();
@@ -978,7 +1003,7 @@ void MainWindow::addAccountRow()
             }
             QString filePath = QFileDialog::getOpenFileName(this, "영수증 선택", "", "Images (*.png *.jpg *.jpeg)");
             if (!filePath.isEmpty()) {
-                QString destDir = BASE_PATH + "/receipts/";
+                QString destDir = BASE_PATH() + "/receipts/";
                 QDir().mkpath(destDir);
 
 //                QString fileName = QFileInfo(filePath).fileName();
@@ -1264,7 +1289,7 @@ void MainWindow::loadBreak()
                 }
                 QString filePath = QFileDialog::getOpenFileName(this, "영수증 선택", "", "Images (*.png *.jpg *.jpeg)");
                 if (!filePath.isEmpty()) {
-                    QString destDir = BASE_PATH + "/receipts/";
+                    QString destDir = BASE_PATH() + "/receipts/";
                     QDir().mkpath(destDir);
 
 //                    QString fileName = QFileInfo(filePath).fileName();
@@ -1801,35 +1826,15 @@ void MainWindow::initSettingsTab() {
         "  color: #333333;"
         "  border: 2px solid #d1d066;"
         "}"
+        );
 
-        "QLineEdit {"
-        "  height: 42px;"
-        "  border: 1.5px solid #e0d8c0;"
-        "  border-radius: 10px;"
-        "  background: #faf8f2;"
-        "  padding: 0 14px;"
-        "}"
-        "QLineEdit:focus {"
-        "  border-color: #d1d066;"
-        "  background: white;"
-        "}"
-        "QPushButton#btnChangePw {"
-        "  background: #d1d066;"
-        "  color: white;"
-        "  border: none;"
-        "  border-radius: 10px;"
-        "  font-size: 13px;"
-        "}"
-        "QPushButton#btnChangePw:hover { background: #b8b84f; }"
-    );
-
-    ui->labelPwSub->setStyleSheet(
+    ui->labelLogSub->setStyleSheet(
         "font-size: 11px; font-weight: 600; letter-spacing: 2px; color: #b8b84f;"
-    );
-    ui->labelPw->setStyleSheet(
+        );
+    ui->labelLog->setStyleSheet(
         "font-size: 18px; font-weight: 600; color: #222;"
         "padding-bottom: 16px; border-bottom: 1.5px solid #f0ead8;"
-    );
+        );
 
     // tableAuditLog 기본 설정
     ui->tableAuditLog->horizontalHeader()->setDefaultAlignment(Qt::AlignCenter);
@@ -1855,13 +1860,26 @@ void MainWindow::initSettingsTab() {
             this, resizeAuditCols);
     resizeAuditCols();
 
-    // 시그널 연결
-    connect(ui->settingsMenu, &QListWidget::currentRowChanged,
-            ui->stackedWidget, &QStackedWidget::setCurrentIndex);
     connect(ui->btnRefreshLog, &QPushButton::clicked,
             this, &MainWindow::loadAuditLog);
-    connect(ui->btnChangePw, &QPushButton::clicked,
-            this, &MainWindow::changeAppPassword);
+
+    // 메뉴 선택 시그널
+    // initSettingsTab()의 시그널 연결 부분
+    connect(ui->settingsMenu, &QListWidget::itemClicked, this, [this](QListWidgetItem *item) {
+        if (m_settingsChangingRow) return;
+        int index = ui->settingsMenu->row(item);
+        if (index == 1) {
+            ui->stackedWidget->setCurrentIndex(1);
+            ChangePasswordDialog dlg(db, this);
+            dlg.exec();
+            m_settingsChangingRow = true;
+            ui->settingsMenu->setCurrentItem(ui->settingsMenu->item(0));
+            m_settingsChangingRow = false;
+            ui->stackedWidget->setCurrentIndex(0);
+        } else {
+            ui->stackedWidget->setCurrentIndex(index);
+        }
+    });
 
     // 초기 선택
     ui->settingsMenu->setCurrentRow(0);
@@ -1894,52 +1912,52 @@ void MainWindow::loadAuditLog() {
     }
 }
 
-void MainWindow::changeAppPassword() {
-    QString currentPw = ui->leCurrentPw->text().trimmed();
-    QString newPw     = ui->leNewPw->text().trimmed();
-    QString confirmPw = ui->leConfirmPw->text().trimmed();
+// void MainWindow::changeAppPassword() {
+//     QString currentPw = ui->leCurrentPw->text().trimmed();
+//     QString newPw     = ui->leNewPw->text().trimmed();
+//     QString confirmPw = ui->leConfirmPw->text().trimmed();
 
-    // 현재 암호 DB 확인
-    QSqlQuery checkQuery(db);
-    checkQuery.prepare("SELECT value FROM codes WHERE name = 'app_password'");
-    if (!checkQuery.exec() || !checkQuery.next()) {
-        QMessageBox::warning(this, "오류", "현재 암호를 확인할 수 없습니다.");
-        return;
-    }
-    if (checkQuery.value(0).toString() != currentPw) {
-        QMessageBox::warning(this, "암호 불일치", "현재 암호가 올바르지 않습니다.");
-        ui->leCurrentPw->clear();
-        ui->leCurrentPw->setFocus();
-        return;
-    }
+//     // 현재 암호 DB 확인
+//     QSqlQuery checkQuery(db);
+//     checkQuery.prepare("SELECT value FROM codes WHERE name = 'app_password'");
+//     if (!checkQuery.exec() || !checkQuery.next()) {
+//         QMessageBox::warning(this, "오류", "현재 암호를 확인할 수 없습니다.");
+//         return;
+//     }
+//     if (checkQuery.value(0).toString() != currentPw) {
+//         QMessageBox::warning(this, "암호 불일치", "현재 암호가 올바르지 않습니다.");
+//         ui->leCurrentPw->clear();
+//         ui->leCurrentPw->setFocus();
+//         return;
+//     }
 
-    // 새 암호 유효성
-    if (newPw.isEmpty()) {
-        QMessageBox::warning(this, "입력 오류", "새 암호를 입력하세요.");
-        return;
-    }
-    if (newPw != confirmPw) {
-        QMessageBox::warning(this, "암호 불일치", "새 암호와 확인 암호가 일치하지 않습니다.");
-        ui->leNewPw->clear();
-        ui->leConfirmPw->clear();
-        ui->leNewPw->setFocus();
-        return;
-    }
+//     // 새 암호 유효성
+//     if (newPw.isEmpty()) {
+//         QMessageBox::warning(this, "입력 오류", "새 암호를 입력하세요.");
+//         return;
+//     }
+//     if (newPw != confirmPw) {
+//         QMessageBox::warning(this, "암호 불일치", "새 암호와 확인 암호가 일치하지 않습니다.");
+//         ui->leNewPw->clear();
+//         ui->leConfirmPw->clear();
+//         ui->leNewPw->setFocus();
+//         return;
+//     }
 
-    // DB 업데이트
-    QSqlQuery updateQuery(db);
-    updateQuery.prepare("UPDATE codes SET value = :pw WHERE name = 'app_password'");
-    updateQuery.bindValue(":pw", newPw);
-    if (!updateQuery.exec()) {
-        QMessageBox::critical(this, "오류", "암호 변경 실패:\n" + updateQuery.lastError().text());
-        return;
-    }
+//     // DB 업데이트
+//     QSqlQuery updateQuery(db);
+//     updateQuery.prepare("UPDATE codes SET value = :pw WHERE name = 'app_password'");
+//     updateQuery.bindValue(":pw", newPw);
+//     if (!updateQuery.exec()) {
+//         QMessageBox::critical(this, "오류", "암호 변경 실패:\n" + updateQuery.lastError().text());
+//         return;
+//     }
 
-    ui->leCurrentPw->clear();
-    ui->leNewPw->clear();
-    ui->leConfirmPw->clear();
-    QMessageBox::information(this, "완료", "암호가 변경되었습니다.");
-}
+//     ui->leCurrentPw->clear();
+//     ui->leNewPw->clear();
+//     ui->leConfirmPw->clear();
+//     QMessageBox::information(this, "완료", "암호가 변경되었습니다.");
+// }
 
 // ---------------------------------------------- Event --------------------------------------------------------
 
