@@ -32,9 +32,9 @@ int main(int argc, char *argv[])
 //    qDebug() << "NEXON families:" << QFontDatabase::applicationFontFamilies(id);
 
     // ===== DB =====
-    QDir().mkpath(BASE_PATH);
+    QDir().mkpath(BASE_PATH());
     QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
-    db.setDatabaseName(BASE_PATH + "/imcyouth.db");
+    db.setDatabaseName(BASE_PATH() + "/imcyouth.db");
     db.open();
 
     // codes 테이블 먼저 생성
