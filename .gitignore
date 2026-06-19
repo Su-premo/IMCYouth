@@ -21,3 +21,5 @@ build*/
 # Compiled object files
 *.o
 *.obj
+
+# External Libraries QXlsx/

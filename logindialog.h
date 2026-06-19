@@ -23,7 +23,7 @@ private:
     QSqlDatabase db;
     int loggedInUserId = -1;
 
-    void attemptLogin();
+    void on_btnConfirm_clicked();
 };
 
 #endif // LOGINDIALOG_H

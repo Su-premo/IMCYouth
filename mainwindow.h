@@ -106,7 +106,6 @@ private:
 
     void initSettingsTab();         // 설정 페이지
     void loadAuditLog();
-    // void changeAppPassword();
 
 };
 
