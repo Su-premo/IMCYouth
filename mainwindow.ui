@@ -51,7 +51,16 @@
          <item><widget class="QWidget" name="chartSatAt" native="true"/></item>
          <item><widget class="QWidget" name="chartSun1At" native="true"/></item>
          <item><widget class="QWidget" name="chartSun2At" native="true"/></item>
-         <item><widget class="QWidget" name="chartBarAt" native="true"/></item>
+         <item>
+          <widget class="QWidget" name="chartBarAt" native="true">
+           <property name="minimumSize">
+            <size>
+             <width>500</width>
+             <height>0</height>
+            </size>
+           </property>
+          </widget>
+         </item>
         </layout>
        </widget>
        <widget class="QPushButton" name="btnOverviewAt">

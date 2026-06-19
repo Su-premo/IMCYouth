@@ -87,8 +87,7 @@ LoginDialog::LoginDialog(QSqlDatabase db, QWidget *parent)
         }
     });
 
-    connect(ui->btnConfirm, &QPushButton::clicked, this, &LoginDialog::attemptLogin);
-    connect(ui->inputCode, &QLineEdit::returnPressed, this, &LoginDialog::attemptLogin);
+    connect(ui->inputCode, &QLineEdit::returnPressed, this, &LoginDialog::on_btnConfirm_clicked);
 }
 
 LoginDialog::~LoginDialog()
@@ -96,7 +95,7 @@ LoginDialog::~LoginDialog()
     delete ui;
 }
 
-void LoginDialog::attemptLogin()
+void LoginDialog::on_btnConfirm_clicked()
 {
     QString input = ui->inputCode->text();
 

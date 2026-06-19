@@ -8,11 +8,13 @@ set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(QT NAMES Qt6 COMPONENTS Widgets Sql Charts REQUIRED)
 find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets Sql Charts REQUIRED)
+add_subdirectory(QXlsx/QXlsx)
+
 
 # chart include 경로 문제로 추가
 include_directories(/usr/include/x86_64-linux-gnu/qt6/QtCharts)
@@ -56,7 +58,12 @@ else()
     endif()
 endif()
 
-target_link_libraries(IMCYouth PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Sql Qt${QT_VERSION_MAJOR}::Charts)
+target_link_libraries(IMCYouth PRIVATE
+    Qt${QT_VERSION_MAJOR}::Widgets
+    Qt${QT_VERSION_MAJOR}::Sql
+    Qt${QT_VERSION_MAJOR}::Charts
+    QXlsx::QXlsx
+)
 
 set_target_properties(IMCYouth PROPERTIES
     MACOSX_BUNDLE_GUI_IDENTIFIER my.example.com

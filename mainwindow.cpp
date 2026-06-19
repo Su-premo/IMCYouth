@@ -296,7 +296,8 @@ void MainWindow::initAccountTab()
 
     // 테이블 컬럼 설정
     ui->tableAc->setColumnCount(7);
-    ui->tableAc->setHorizontalHeaderLabels({"#", "날짜", "항목", "설명", "금액", "구분", "영수증"});
+    // ui->tableAc->setHorizontalHeaderLabels({"#", "날짜", "항목", "설명", "금액", "구분", "영수증"});
+    ui->tableAc->setHorizontalHeaderLabels({"#", "날짜", "계정과목", "적요", "거래처", "수입", "지출", "잔액", "비고", "영수증"});
     ui->tableAc->verticalHeader()->hide();
     ui->tableAc->horizontalHeader()->setStretchLastSection(false);
     ui->tableAc->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Fixed);
@@ -307,23 +308,16 @@ void MainWindow::initAccountTab()
     ui->tableAc->setColumnWidth(2, 130);  // Category
     ui->tableAc->horizontalHeader()->setSectionResizeMode(3, QHeaderView::Stretch); // Description 자동
     ui->tableAc->horizontalHeader()->setSectionResizeMode(4, QHeaderView::Fixed);
-    ui->tableAc->setColumnWidth(4, 100);   // Amount
+    ui->tableAc->setColumnWidth(4, 100);   // 거래처
     ui->tableAc->horizontalHeader()->setSectionResizeMode(5, QHeaderView::Fixed);
-    ui->tableAc->setColumnWidth(5, 100);   // Type
+    ui->tableAc->setColumnWidth(5, 100);   // 수입
     ui->tableAc->horizontalHeader()->setSectionResizeMode(6, QHeaderView::Fixed);
+    ui->tableAc->setColumnWidth(6, 100);   // 지출
+    ui->tableAc->horizontalHeader()->setSectionResizeMode(7, QHeaderView::Fixed);
+    ui->tableAc->setColumnWidth(7, 100);   // 잔액
+    ui->tableAc->horizontalHeader()->setSectionResizeMode(8, QHeaderView::Stretch); // 비고 자동
+    ui->tableAc->horizontalHeader()->setSectionResizeMode(9, QHeaderView::Fixed);
     ui->tableAc->setColumnWidth(6, 120);   // Receipt
-//    ui->tableAc->setHorizontalHeaderLabels({"#", "Date", "Category", "Description", "Amount", "Type", "Receipt"});
-//    ui->tableAc->verticalHeader()->hide();
-//    ui->tableAc->setColumnWidth(0, 40);  // #
-//    ui->tableAc->setColumnWidth(1, 100);  // Date
-//    ui->tableAc->setColumnWidth(2, 120);  // Category
-////    ui->tableAc->setColumnWidth(3, 180);  // Description
-//    ui->tableAc->setColumnWidth(4, 80);   // Amount
-//    ui->tableAc->setColumnWidth(5, 80);   // Type
-//    ui->tableAc->setColumnWidth(6, 80);   // Receipt
-////    ui->tableAc->horizontalHeader()->setStretchLastSection(true);
-//    ui->tableAc->horizontalHeader()->setStretchLastSection(false);
-//    ui->tableAc->horizontalHeader()->setSectionResizeMode(3, QHeaderView::Stretch); // Description만 늘어나게
 
     // 기본 편집 불가
     ui->tableAc->setEditTriggers(QAbstractItemView::NoEditTriggers);
@@ -351,11 +345,6 @@ void MainWindow::initMembersTab()
         table->setColumnWidth(3, 130);  // Phone
         table->setColumnWidth(4, 335);
         table->setColumnWidth(5, 220);
-//        table->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Stretch);  // Name
-//        table->horizontalHeader()->setSectionResizeMode(2, QHeaderView::Stretch);  // BirthDate
-//        table->horizontalHeader()->setSectionResizeMode(3, QHeaderView::Stretch);  // Phone
-//        table->horizontalHeader()->setSectionResizeMode(4, QHeaderView::Stretch);  // Address
-//        table->horizontalHeader()->setSectionResizeMode(5, QHeaderView::Stretch);  // Workplace
         table->horizontalHeader()->setSectionResizeMode(6, QHeaderView::Stretch);  // Notes
     };
 
@@ -385,19 +374,21 @@ void MainWindow::initMembersTab()
     ui->tableMembers->setFocusPolicy(Qt::NoFocus);
     ui->tableMembersInactive->setFocusPolicy(Qt::NoFocus);
 
-    // 텍스트에 따라 컬럼 가로길이 조정
-//    ui->tableMembers->horizontalHeader()->setSectionResizeMode(4, QHeaderView::ResizeToContents);
     ui->labelInactive->setText("⚠️ 3개월 이상 미출석 멤버");
     loadMembers();
 }
 
 void MainWindow::initDatabase()
 {
+
+    qDebug() << "BASE_PATH:" << BASE_PATH();
+    qDebug() << "DB path:" << BASE_PATH() + "/imcyouth.db";
+
     // 폴더 생성
     QDir().mkpath(BASE_PATH());
     QDir().mkpath(BASE_PATH() + "/receipts");
 
-    db = QSqlDatabase::addDatabase("QSQLITE");
+    db = QSqlDatabase::addDatabase("QSQLITE", "imcyouth");
     db.setDatabaseName(BASE_PATH() + "/imcyouth.db");
 
     if (!db.open()) {
@@ -471,19 +462,6 @@ void MainWindow::initDatabase()
             value TEXT NOT NULL
         )
     )");
-
-    // 기존 중복 제거 (가장 큰 id만 남기고 삭제)
-    query.exec(R"(
-    DELETE FROM attendance WHERE id NOT IN (
-        SELECT MAX(id) FROM attendance GROUP BY memberId, date, service
-    )
-    )");
-
-    // UNIQUE 인덱스 추가 (없으면 생성)
-    query.exec(R"(
-    CREATE UNIQUE INDEX IF NOT EXISTS idx_attendance_unique
-    ON attendance (memberId, date, service)
-    )");
 }
 
 // ---------------------------------------------- Attendance --------------------------------------------------------
@@ -533,21 +511,6 @@ void MainWindow::loadAttendance()
     ui->tableAt->setHorizontalHeaderLabels(headers);
     ui->tableAt->verticalHeader()->hide();
 
-/*
-    // 컬럼 가로 크기 설정 (# 고정, Name 고정, 날짜 컬럼 화면에 맞게 자동 계산)
-    ui->tableAt->horizontalHeader()->setStretchLastSection(false);
-    ui->tableAt->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Fixed);
-    ui->tableAt->setColumnWidth(0, 40);   // #
-    ui->tableAt->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Fixed);
-    ui->tableAt->setColumnWidth(1, 100);  // Name
-    int dateColCount = headers.size() - 2;  // # 과 Name 제외
-    int availableWidth = ui->tableAt->width() - 40 - 100 - 20;  // 스크롤바 여백 20 (오른쪽 공백 생겼음) -> 2로 수정
-    int dateColWidth = (dateColCount > 0) ? availableWidth / dateColCount : 90;
-    for (int i = 2; i < headers.size(); i++) {
-        ui->tableAt->horizontalHeader()->setSectionResizeMode(i, QHeaderView::Fixed);
-        ui->tableAt->setColumnWidth(i, dateColWidth);  // 자동 계산된 너비
-    }
-*/
     // 컬럼 가로 크기 설정 - Stretch로 자동 분배
     ui->tableAt->horizontalHeader()->setStretchLastSection(false);
     ui->tableAt->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Fixed);
@@ -568,8 +531,6 @@ void MainWindow::loadAttendance()
         QString name = memberQuery.value(1).toString();
 
         ui->tableAt->insertRow(row);
-//        ui->tableAt->setItem(row, 0, new QTableWidgetItem(name));
-//        ui->tableAt->item(row, 0)->setData(Qt::UserRole, memberId);
 
         // 인덱스
         QTableWidgetItem *indexItem = new QTableWidgetItem(QString::number(row + 1));
@@ -658,13 +619,6 @@ void MainWindow::saveAttendance()
 
 void MainWindow::updateCharts()
 {
-    QSqlQuery debugQ(db);
-    debugQ.exec("SELECT date, service, isPresent FROM attendance ORDER BY date");
-    while (debugQ.next()) {
-        qDebug() << debugQ.value(0).toString()
-        << debugQ.value(1).toString()
-        << debugQ.value(2).toInt();
-    }
 
     int year = ui->spinYearAt->value();
     int month = ui->comboMonthAt->currentData().toInt();
@@ -739,6 +693,9 @@ void MainWindow::updateCharts()
         chart->setTitle(title);
         chart->legend()->show();
 
+        // 원형 그래프 마진 최소화
+        chart->setMargins(QMargins(5, 20, 5, 5));
+
         QChartView *chartView = new QChartView(chart);
         chartView->setRenderHint(QPainter::Antialiasing);
 
@@ -793,6 +750,7 @@ void MainWindow::updateCharts()
         monthLabels << QString::number(m) + "월";
     }
 
+    // ---- 연간 막대그래프 세팅 파트 ----
     QBarSeries *barSeries = new QBarSeries();
     barSeries->append(barSet);
 
@@ -800,31 +758,38 @@ void MainWindow::updateCharts()
     barChart->addSeries(barSeries);
     barChart->setTitle(QString::number(year) + "년 월별 출석");
 
+    // X축 (월별 레이블) 설정
     QBarCategoryAxis *axisX = new QBarCategoryAxis();
     axisX->append(monthLabels);
 //    axisX->setLabelsAngle(-15);  // 레이블 45도 기울이기
     axisX->setLabelsVisible(true);
-    axisX->setLabelsFont(QFont("kartrider", 6));
+    axisX->setLabelsFont(QFont("kartrider", 8));
     barChart->addAxis(axisX, Qt::AlignBottom);
     barSeries->attachAxis(axisX);
-    barChart->setMargins(QMargins(0, 10, 10, 10)); // 하단 여백 추가
+    // barChart->setMargins(QMargins(0, 10, 10, 10)); // 하단 여백 추가
 
     // 차트 플롯 영역 축소해서 레이블 공간 확보
     barChart->legend()->setAlignment(Qt::AlignTop);
 
-    // barChart->layout()->setContentsMargins(0, 0, 0, 20);
-
     // 연도 월별 막대 그래프
     QValueAxis *axisY = new QValueAxis();
     axisY->setRange(0, 100);            // 전체 인원수 기준(totalMembers) -> 월 평균(100)으로 변경
+
     axisY->setTickCount(6);
     axisY->setLabelFormat("%d%%");        // 전체 인원수 정수만 표시(%d) -> 평균률(%d%%)로 변경
     barChart->addAxis(axisY, Qt::AlignLeft);
     barSeries->attachAxis(axisY);
 
+    // 마진 미세 조율
+    // 아래쪽(bottom) 마진을 16으로 당겨서 글자와 상자 하단 경계면 사이의 간격을 좁히고,
+    // 위쪽(top) 마진을 5로 조여서 격자 자체를 위로
+    barChart->setMargins(QMargins(22, 5, 15, 16)); // (왼쪽, 위, 오른쪽, 아래)
+
     QChartView *barView = new QChartView(barChart);
     barView->setRenderHint(QPainter::Antialiasing);
-    barView->setContentsMargins(0, 0, 0, 20);
+
+    // QChartView 자체의 불필요한 테두리 공백을 0으로
+    barView->setContentsMargins(0, 0, 0, 0);
 
     QLayout *old = ui->chartBarAt->layout();
     if (old) {
@@ -838,6 +803,8 @@ void MainWindow::updateCharts()
 
     QVBoxLayout *barLayout = new QVBoxLayout(ui->chartBarAt);
     barLayout->addWidget(barView);
+
+    // 외부 컨테이너 박스의 마진을 완전히 제로로 밀어 그래프가 레이아웃 안에서 최대로 커지게
     barLayout->setContentsMargins(0,0,0,0);
 }
 
@@ -912,8 +879,6 @@ void MainWindow::loadAccount()
                     QString destDir = BASE_PATH() + "/receipts/";
                     QDir().mkpath(destDir);
 
-//                    QString fileName = QFileInfo(filePath).fileName();
-//                    QString destPath = destDir + fileName;
                     QString date = ui->tableAc->item(row, 1)->text();         // 날짜
                     QString category = ui->tableAc->item(row, 2)->text();     // 항목
                     QString index = ui->tableAc->item(row, 0)->text();        // 인덱스
@@ -1006,8 +971,6 @@ void MainWindow::addAccountRow()
                 QString destDir = BASE_PATH() + "/receipts/";
                 QDir().mkpath(destDir);
 
-//                QString fileName = QFileInfo(filePath).fileName();
-//                QString destPath = destDir + fileName;
                 QString date = ui->tableAc->item(row, 1)->text();
                 QString category = ui->tableAc->item(row, 2)->text();
                 QString index = ui->tableAc->item(row, 0)->text();
@@ -1193,7 +1156,6 @@ void MainWindow::updateAccountCharts()
 
     QBarCategoryAxis *axisX = new QBarCategoryAxis();
     axisX->append(monthLabels);
-//    axisX->setLabelsAngle(-15);
     axisX->setLabelsFont(QFont("kartrider", 10));
     barChart->addAxis(axisX, Qt::AlignBottom);
     barSeries->attachAxis(axisX);
@@ -1292,8 +1254,6 @@ void MainWindow::loadBreak()
                     QString destDir = BASE_PATH() + "/receipts/";
                     QDir().mkpath(destDir);
 
-//                    QString fileName = QFileInfo(filePath).fileName();
-//                    QString destPath = destDir + fileName;
                     QString date = ui->tableAc->item(row, 1)->text();         // 날짜
                     QString category = ui->tableAc->item(row, 2)->text();     // 항목
                     QString index = ui->tableAc->item(row, 0)->text();        // 인덱스
@@ -1597,9 +1557,6 @@ void MainWindow::loadMembers()
                 query.value(5).toString(), query.value(6).toString());
         }
     }
-    // 내용 길이에 따라 조정
-//    ui->tableMembers->resizeRowsToContents();
-//    ui->tableMembersInactive->resizeRowsToContents();
 
     // 저장/로드 후 편집 불가 + 수정 버튼 색상 복귀
     ui->tableMembers->setEditTriggers(QAbstractItemView::NoEditTriggers);
@@ -1911,53 +1868,6 @@ void MainWindow::loadAuditLog() {
         }
     }
 }
-
-// void MainWindow::changeAppPassword() {
-//     QString currentPw = ui->leCurrentPw->text().trimmed();
-//     QString newPw     = ui->leNewPw->text().trimmed();
-//     QString confirmPw = ui->leConfirmPw->text().trimmed();
-
-//     // 현재 암호 DB 확인
-//     QSqlQuery checkQuery(db);
-//     checkQuery.prepare("SELECT value FROM codes WHERE name = 'app_password'");
-//     if (!checkQuery.exec() || !checkQuery.next()) {
-//         QMessageBox::warning(this, "오류", "현재 암호를 확인할 수 없습니다.");
-//         return;
-//     }
-//     if (checkQuery.value(0).toString() != currentPw) {
-//         QMessageBox::warning(this, "암호 불일치", "현재 암호가 올바르지 않습니다.");
-//         ui->leCurrentPw->clear();
-//         ui->leCurrentPw->setFocus();
-//         return;
-//     }
-
-//     // 새 암호 유효성
-//     if (newPw.isEmpty()) {
-//         QMessageBox::warning(this, "입력 오류", "새 암호를 입력하세요.");
-//         return;
-//     }
-//     if (newPw != confirmPw) {
-//         QMessageBox::warning(this, "암호 불일치", "새 암호와 확인 암호가 일치하지 않습니다.");
-//         ui->leNewPw->clear();
-//         ui->leConfirmPw->clear();
-//         ui->leNewPw->setFocus();
-//         return;
-//     }
-
-//     // DB 업데이트
-//     QSqlQuery updateQuery(db);
-//     updateQuery.prepare("UPDATE codes SET value = :pw WHERE name = 'app_password'");
-//     updateQuery.bindValue(":pw", newPw);
-//     if (!updateQuery.exec()) {
-//         QMessageBox::critical(this, "오류", "암호 변경 실패:\n" + updateQuery.lastError().text());
-//         return;
-//     }
-
-//     ui->leCurrentPw->clear();
-//     ui->leNewPw->clear();
-//     ui->leConfirmPw->clear();
-//     QMessageBox::information(this, "완료", "암호가 변경되었습니다.");
-// }
 
 // ---------------------------------------------- Event --------------------------------------------------------
 

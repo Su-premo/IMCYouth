@@ -27,33 +27,16 @@ int main(int argc, char *argv[])
     font.setBold(false);
     a.setFont(font);
 
-//    int id = QFontDatabase::addApplicationFont(":/fonts/Danjo-bold-Regular.otf");
-//    qDebug() << "NEXON id:" << id;
-//    qDebug() << "NEXON families:" << QFontDatabase::applicationFontFamilies(id);
-
-    // ===== DB =====
-    QDir().mkpath(BASE_PATH());
-    QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
-    db.setDatabaseName(BASE_PATH() + "/imcyouth.db");
-    db.open();
-
-    // codes 테이블 먼저 생성
-    QSqlQuery query(db);
-    query.exec(R"(
-        CREATE TABLE IF NOT EXISTS codes (
-            name TEXT PRIMARY KEY,
-            value TEXT NOT NULL
-        )
-    )");
+    // ===== 윈도우 생성 (DB 초기화가 MainWindow 생성자에서 실행됨) =====
+    MainWindow w;
 
     // ===== 프로그램 로그인 =====
+    QSqlDatabase db = QSqlDatabase::database("imcyouth");
     LoginDialog login(db);
     if (login.exec() != QDialog::Accepted) {
         return 0;                       // 로그인 취소시 종료
     }
 
-    // ===== 윈도우 생성 =====
-    MainWindow w;
     w.setWindowTitle("권라면과 안성탕면");
 
     // ===== IMCYouth UI 테마 =====
