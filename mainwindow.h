@@ -27,6 +27,9 @@
 #include <QSqlError>
 #include <QMessageBox>
 
+#include "xlsxdocument.h"
+
+
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -92,6 +95,8 @@ private:
     void deleteAccountRow();
     void updateAccountCharts();      // 회계 그래프
 
+    void exportAccountToExcel();
+
     void loadBreak();
     void saveBreak();
     void addBreakRow();
@@ -106,6 +111,7 @@ private:
 
     void initSettingsTab();         // 설정 페이지
     void loadAuditLog();
+
 
 };
 
