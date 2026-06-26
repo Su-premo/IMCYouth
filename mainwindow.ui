@@ -86,15 +86,9 @@
          </rect>
         </property>
         <layout class="QHBoxLayout" name="horizontalLayout_2">
-         <item>
-          <widget class="QWidget" name="chartSatAt" native="true"/>
-         </item>
-         <item>
-          <widget class="QWidget" name="chartSun1At" native="true"/>
-         </item>
-         <item>
-          <widget class="QWidget" name="chartSun2At" native="true"/>
-         </item>
+         <item><widget class="QWidget" name="chartSatAt" native="true"/></item>
+         <item><widget class="QWidget" name="chartSun1At" native="true"/></item>
+         <item><widget class="QWidget" name="chartSun2At" native="true"/></item>
          <item>
           <widget class="QWidget" name="chartBarAt" native="true">
            <property name="minimumSize">
