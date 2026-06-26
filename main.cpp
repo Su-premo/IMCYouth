@@ -27,6 +27,9 @@ int main(int argc, char *argv[])
     font.setBold(false);
     a.setFont(font);
 
+    // 아이콘 지정
+    a.setWindowIcon(QIcon(":/icons/youth.png"));
+
     // ===== 윈도우 생성 (DB 초기화가 MainWindow 생성자에서 실행됨) =====
     MainWindow w;
 
