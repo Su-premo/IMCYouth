@@ -1165,11 +1165,41 @@ void MainWindow::exportAccountToExcel()
     // 기간
     QLabel *lPeriod = new QLabel("기간");
     lPeriod->setStyleSheet(labelStyle);
+
     QComboBox *comboPeriod = new QComboBox();
-    comboPeriod->addItem("상반기 (1~6월)",  QVariantList({1, 6}));
-    comboPeriod->addItem("하반기 (7~12월)", QVariantList({7, 12}));
-    comboPeriod->addItem("전체 (1~12월)",   QVariantList({1, 12}));
     comboPeriod->setStyleSheet(comboStyle);
+
+    auto updatePeriod = [&](int year) {
+        comboPeriod->clear();
+        QSqlQuery pq(db);
+        pq.prepare(
+            "SELECT DISTINCT "
+            "CASE WHEN CAST(strftime('%m', date) AS INTEGER) <= 6 THEN 'first' ELSE 'second' END as half "
+            "FROM transactions WHERE isBlack=0 AND strftime('%Y', date) = ? ORDER BY half ASC"
+            );
+        pq.addBindValue(QString::number(year));
+        pq.exec();
+
+        bool hasFirst = false, hasSecond = false;
+        while (pq.next()) {
+            if (pq.value(0).toString() == "first") hasFirst  = true;
+            else                                    hasSecond = true;
+        }
+        if (hasFirst)  comboPeriod->addItem("상반기 (1~6월)",  QVariantList({1, 6}));
+        if (hasSecond) comboPeriod->addItem("하반기 (7~12월)", QVariantList({7, 12}));
+        if (hasFirst && hasSecond)
+            comboPeriod->addItem("전체 (1~12월)",   QVariantList({1, 12}));
+        if (!hasFirst && !hasSecond)
+            comboPeriod->addItem("전체 (1~12월)",   QVariantList({1, 12}));
+    };
+
+    updatePeriod(comboYear->currentData().toInt());
+
+    connect(comboYear, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            &dlg, [&]() {
+                updatePeriod(comboYear->currentData().toInt());
+            });
+
     mainLayout->addWidget(lPeriod);
     mainLayout->addWidget(comboPeriod);
     mainLayout->addSpacing(12);
@@ -1297,32 +1327,48 @@ void MainWindow::exportAccountToExcel()
     // ── Row 1: 제목 ──
     QString title = QString("%1년 %2월 ~ %3년 %4월  금 전 출 납 대 장")
                         .arg(year).arg(startMonth).arg(year).arg(endMonth);
+    xlsx.write(1, 1, title, titleFmt);
+    xlsx.write(1, 2, "", titleFmt);
+    xlsx.write(1, 3, "", titleFmt);
+    xlsx.write(1, 4, "", titleFmt);
+    xlsx.write(1, 5, "", titleFmt);
+    xlsx.write(1, 6, "", titleFmt);
+    xlsx.write(1, 7, "", titleFmt);
+    xlsx.write(1, 8, "", titleFmt);
     xlsx.mergeCells("A1:H1");
-    xlsx.write("A1", title, titleFmt);
     xlsx.setRowHeight(1, 28);
 
     // ── Row 2: 부서명 ──
     xlsx.write(2, 1, "부서명", lblFmt);
+    xlsx.write(2, 2, dept, cellFmt);
+    xlsx.write(2, 3, "", cellFmt);
+    xlsx.write(2, 4, "", cellFmt);
     xlsx.mergeCells(QXlsx::CellRange(2, 2, 2, 4));
-    xlsx.write(2, 2, dept,    cellFmt);
-    xlsx.write(2, 5, "부장",  lblFmt);
+    xlsx.write(2, 5, "부장", lblFmt);
+    xlsx.write(2, 6, "", cellFmt);
+    xlsx.write(2, 7, "", cellFmt);
+    xlsx.write(2, 8, "", cellFmt);
     xlsx.mergeCells(QXlsx::CellRange(2, 6, 2, 8));
-    xlsx.write(2, 6, "",      cellFmt);
 
     // ── Row 3: 이월금액 ──
-    xlsx.write(3, 1, "이월금액", lblFmt);
-    xlsx.mergeCells(QXlsx::CellRange(3, 2, 3, 4));
     QString carryStr = (carryOver == 0) ? "-" : QLocale(QLocale::Korean).toString(carryOver);
-    xlsx.write(3, 2, carryStr,  cellFmt);
-    xlsx.write(3, 5, "총무",    lblFmt);
+    xlsx.write(3, 1, "이월금액", lblFmt);
+    xlsx.write(3, 2, carryStr, cellFmt);
+    xlsx.write(3, 3, "", cellFmt);
+    xlsx.write(3, 4, "", cellFmt);
+    xlsx.mergeCells(QXlsx::CellRange(3, 2, 3, 4));
+    xlsx.write(3, 5, "총무", lblFmt);
+    xlsx.write(3, 6, "", cellFmt);
+    xlsx.write(3, 7, "", cellFmt);
+    xlsx.write(3, 8, "", cellFmt);
     xlsx.mergeCells(QXlsx::CellRange(3, 6, 3, 8));
-    xlsx.write(3, 6, "",        cellFmt);
 
     // ── Row 4: 컬럼 헤더 ──
     QStringList headers = {"날짜", "계정과목", "적  요", "거래처", "수  입", "지출", "잔액", "비고"};
     for (int c = 0; c < headers.size(); c++)
         xlsx.write(4, c + 1, headers[c], colHdrFmt);
     xlsx.setRowHeight(4, 20);
+
 
     // ── 컬럼 너비 ──
     xlsx.setColumnWidth(1, 11);  // 날짜

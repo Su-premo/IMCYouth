@@ -8,4 +8,9 @@
         <file alias="NEXON-Kart-Gothic-Bold.ttf">fonts/NEXON-Kart-Gothic-Bold.ttf</file>
         <file alias="Danjo-bold-Regular.otf">fonts/Danjo-bold-Regular.otf</file>
     </qresource>
+    <qresource prefix="/icons">
+        <file alias="youth.png">icons/youth.png</file>
+        <file alias="article.png">icons/article.png</file>
+        <file alias="group.png">icons/group.png</file>
+    </qresource>
 </RCC>
